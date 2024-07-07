@@ -3,7 +3,7 @@ ModbusSniffer
 
 Modbus RTU packet sniffer
 
-Print all packets on bus from either slave or master.
+Print all packets on bus from either slave or master and writes them to a logfile.
 Useful for sniffing packets between two devices to ensure correct operation.
 
 Simple command line tool that prints results to the terminal.
@@ -18,6 +18,7 @@ Usage:
 Arguments:  
   -p, --port        select the serial port (Required)  
   -b, --baudrate    set the communication baud rate, default = 9600 (Option)  
+  -r, --parity      select parity, default = even (Option)"
   -t, --timeout     overrite the calculated inter frame timeout, default = 0.0034375s (Option)
   -h, --help        print the documentation
 ```
