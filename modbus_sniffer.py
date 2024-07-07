@@ -813,7 +813,7 @@ class SerialSnooper:
 # --------------------------------------------------------------------------- #
 # Print the usage help
 # --------------------------------------------------------------------------- #
-def printHelp(baud, timeout):
+def printHelp(baud, parity, log_to_file, timeout):
     if timeout == None:
         timeout = calcTimeout(baud)
     print("\nUsage:")
@@ -822,8 +822,9 @@ def printHelp(baud, timeout):
     print("Arguments:")
     print("  -p, --port        select the serial port (Required)")
     print("  -b, --baudrate    set the communication baud rate, default = {} (Option)".format(baud))
-    print("  -r, --parity      select parity, default = even (Option)")
-    print("  -t, --timeout     override the calculated inter frame timeout, default = {}s (Option)".format(timeout))
+    print("  -r, --parity      select parity, default = {} (Option)".format(parity))
+    print("  -t, --timeout     override the calculated inter frame timeout, default = {}s (Option)".format(log_to_file))
+    print("  -l, --log-to-file console log is written to file, default = {}s (Option)".format(timeout))
     print("  -h, --help        print the documentation")
     print("")
     # print("  python3 {} -p <serial port> [-b baudrate, default={}] [-t timeout, default={}]".format(sys.argv[0], baud, timeout))
@@ -900,7 +901,7 @@ if __name__ == "__main__":
 
     if port == None:
         print("Serial Port not defined please use:")
-        printHelp(baud, timeout)
+        printHelp(baud, parity, log_to_file, timeout)
         sys.exit(2)
     
     if timeout == None:

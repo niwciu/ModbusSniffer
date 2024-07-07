@@ -18,6 +18,7 @@ Arguments:
   -b, --baudrate    set the communication baud rate, default = 9600 (Option)  
   -r, --parity      select parity, default = even (Option)"
   -t, --timeout     overrite the calculated inter frame timeout, default = 0.0034375s (Option)
+  -l, --log-to-file console log is written to file, default = EVEN (Option)
   -h, --help        print the documentation
 ```
 
