@@ -45,13 +45,14 @@ log.addHandler(handler)
 # --------------------------------------------------------------------------- #
 class SerialSnooper:
 
-    def __init__(self, port, baud=9600, timeout=0):
+    def __init__(self, port, baud=9600, parity=serial.PARITY_EVEN, timeout=0):
         self.port = port
         self.baud = baud
         self.timeout = timeout
+        self.parity = parity
 
-        log.info("Opening serial interface: \n" + "\tport: {} \n".format(port) + "\tbaudrate: {}\n".format(baud) + "\tbytesize: 8\n" + "\tparity: none\n" + "\tstopbits: 1\n" + "\ttimeout: {}\n".format(timeout))
-        self.connection = serial.Serial(port=port, baudrate=baud, bytesize=serial.EIGHTBITS, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, timeout=timeout)
+        log.info("Opening serial interface: \n" + "\tport: {} \n".format(port) + "\tbaudrate: {}\n".format(baud) + "\tbytesize: 8\n" + "\tparity: {}\n".format(parity) + "\tstopbits: 1\n" + "\ttimeout: {}\n".format(timeout))
+        self.connection = serial.Serial(port=port, baudrate=baud, bytesize=serial.EIGHTBITS, parity=parity, stopbits=serial.STOPBITS_ONE, timeout=timeout)
         log.debug(self.connection)
 
         # Global variables
@@ -731,7 +732,7 @@ class SerialSnooper:
         crcHi = 0XFF
         crcLo = 0xFF
         
-        crcHiTable	= [	0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41, 0x01, 0xC0,
+        crcHiTable  = [ 0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41, 0x01, 0xC0,
                         0x80, 0x41, 0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41,
                         0x00, 0xC1, 0x81, 0x40, 0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0,
                         0x80, 0x41, 0x01, 0xC0, 0x80, 0x41, 0x00, 0xC1, 0x81, 0x40,
@@ -807,6 +808,7 @@ def printHelp(baud, timeout):
     print("Arguments:")
     print("  -p, --port        select the serial port (Required)")
     print("  -b, --baudrate    set the communication baud rate, default = {} (Option)".format(baud))
+    print("  -r, --parity      select parity, default = even (Option)")
     print("  -t, --timeout     override the calculated inter frame timeout, default = {}s (Option)".format(timeout))
     print("  -h, --help        print the documentation")
     print("")
@@ -816,14 +818,14 @@ def printHelp(baud, timeout):
 # Calculate the timeout with the baudrate
 # --------------------------------------------------------------------------- #
 def calcTimeout(baud):
-	# Modbus states that a baud rate higher than 19200 must use a 1.75 ms for a frame delay.
-	# For baud rates below 19200 the timeing is more critical and has to be calculated.
+    # Modbus states that a baud rate higher than 19200 must use a 1.75 ms for a frame delay.
+    # For baud rates below 19200 the timeing is more critical and has to be calculated.
     # In modbus a character is made of a data byte that appends a start bit, stop bit,
     # and parity bit which mean in RTU mode, there are 11 bits per character.
     # Though the "Character-Time" calculation is 11 bits/char / [baud rate] bits/sec.
     # Modbus standard states a frame delay must be 3.5T or 3.5 times longer than 
     # a normal character.
-	# E.g. for 9600 baud:
+    # E.g. for 9600 baud:
     # "Character-Time": 11 / 9600 = 0.0011458s 
     # "Frame delay": 11 * 3.5 = 38.5
     #                38.5 / 9600 = 0.0040104s
@@ -852,9 +854,10 @@ if __name__ == "__main__":
     port = None
     baud = 9600
     timeout = None
+    parity = serial.PARITY_EVEN
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:],"hp:b:t:",["help", "port=", "baudrate=", "timeout="])
+        opts, args = getopt.getopt(sys.argv[1:],"hp:b:r:t",["help", "port=", "baudrate=",  "parity=", "timeout="])
     except getopt.GetoptError as e:
         log.debug(e)
         printHelp(baud, timeout)
@@ -869,6 +872,13 @@ if __name__ == "__main__":
             baud = int(arg)
         elif opt in ("-t", "--timeout"):
             timeout = float(arg)
+        elif opt in ("-r", "--parity"):
+            if "none" in arg.lower():
+                parity = serial.PARITY_NONE
+            elif "even" in arg.lower():
+                parity = serial.PARITY_EVEN
+            elif "odd" in arg.lower():
+                parity = serial.PARITY_ODD
     
     if port == None:
         print("Serial Port not defined please use:")
@@ -878,7 +888,7 @@ if __name__ == "__main__":
     if timeout == None:
         timeout = calcTimeout(baud)
     
-    with SerialSnooper(port, baud, timeout) as sniffer:
+    with SerialSnooper(port, baud, parity, timeout) as sniffer:
         while True:
             data = sniffer.read_raw()
             sniffer.process_data(data)
