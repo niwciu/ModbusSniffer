@@ -15,11 +15,14 @@ import sys
 import getopt
 import logging
 import serial
+from datetime import datetime
 
 # --------------------------------------------------------------------------- #
 # configure the logging system
 # --------------------------------------------------------------------------- #
-class myFormatter(logging.Formatter):
+
+# Custom formatter class
+class MyFormatter(logging.Formatter):
     def format(self, record):
         if record.levelno == logging.INFO:
             self._style._fmt = "%(asctime)-15s %(message)s"
@@ -34,11 +37,20 @@ class myFormatter(logging.Formatter):
             self._style._fmt = f"%(asctime)-15s \033[{color}m%(levelname)-8s %(threadName)-15s-%(module)-15s:%(lineno)-8s\033[0m: %(message)s"
         return super().format(record)
 
+# Configure the root logger
 log = logging.getLogger()
-handler = logging.StreamHandler()
-handler.setFormatter(myFormatter())
 log.setLevel(logging.INFO)
-log.addHandler(handler)
+
+# Console handler with custom formatter
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(MyFormatter())
+log.addHandler(console_handler)
+
+# File handler with custom formatter, using current datetime for filename
+current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+file_handler = logging.FileHandler(f'log_{current_time}.log')
+file_handler.setFormatter(MyFormatter())
+log.addHandler(file_handler)
 
 # --------------------------------------------------------------------------- #
 # declare the sniffer
