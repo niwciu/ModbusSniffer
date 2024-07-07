@@ -25,18 +25,9 @@ Arguments:
 Project Informations
 --------------------
 
-### - Languages
-
-[![GitHub language count](https://img.shields.io/github/languages/count/ekristoffe/ModbusSniffer)](README.md)  
-[![GitHub top language](https://img.shields.io/github/languages/top/ekristoffe/ModbusSniffer)](README.md)
-
 ### - License
 
 [![GitHub](https://img.shields.io/github/license/ekristoffe/ModbusSniffer)](https://github.com/ekristoffe/ModbusSniffer/blob/main/LICENSE)
-
-### - Release Note
-
-* 1.0.0 First release
 
 Disclaimer
 ----------
