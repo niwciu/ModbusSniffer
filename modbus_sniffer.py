@@ -21,7 +21,6 @@ from datetime import datetime
 # configure the logging system
 # --------------------------------------------------------------------------- #
 
-# Custom formatter class
 class MyFormatter(logging.Formatter):
     def format(self, record):
         if record.levelno == logging.INFO:
@@ -36,21 +35,24 @@ class MyFormatter(logging.Formatter):
             }.get(record.levelno, 0)
             self._style._fmt = f"%(asctime)-15s \033[{color}m%(levelname)-8s %(threadName)-15s-%(module)-15s:%(lineno)-8s\033[0m: %(message)s"
         return super().format(record)
+    
+def configure_logging(log_to_file):
+    log = logging.getLogger()
+    log.setLevel(logging.INFO)
 
-# Configure the root logger
-log = logging.getLogger()
-log.setLevel(logging.INFO)
+    # Console handler with custom formatter
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(MyFormatter())
+    log.addHandler(console_handler)
 
-# Console handler with custom formatter
-console_handler = logging.StreamHandler()
-console_handler.setFormatter(MyFormatter())
-log.addHandler(console_handler)
+    if log_to_file:
+        # File handler with custom formatter, using current datetime for filename
+        current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        file_handler = logging.FileHandler(f'log_{current_time}.log')
+        file_handler.setFormatter(MyFormatter())
+        log.addHandler(file_handler)
 
-# File handler with custom formatter, using current datetime for filename
-current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-file_handler = logging.FileHandler(f'log_{current_time}.log')
-file_handler.setFormatter(MyFormatter())
-log.addHandler(file_handler)
+    return log
 
 # --------------------------------------------------------------------------- #
 # declare the sniffer
@@ -867,11 +869,11 @@ if __name__ == "__main__":
     baud = 9600
     timeout = None
     parity = serial.PARITY_EVEN
+    log_to_file = False
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:],"hp:b:r:t",["help", "port=", "baudrate=",  "parity=", "timeout="])
+        opts, args = getopt.getopt(sys.argv[1:],"hpl:b:r:t",["help", "port=", "baudrate=",  "parity=", "timeout=", "log-to-file"])
     except getopt.GetoptError as e:
-        log.debug(e)
         printHelp(baud, timeout)
         sys.exit(2)
     for opt, arg in opts:
@@ -891,7 +893,11 @@ if __name__ == "__main__":
                 parity = serial.PARITY_EVEN
             elif "odd" in arg.lower():
                 parity = serial.PARITY_ODD
+        elif opt in ("-l", "--log-to-file"):
+            log_to_file = True
     
+    log = configure_logging(log_to_file)
+
     if port == None:
         print("Serial Port not defined please use:")
         printHelp(baud, timeout)
