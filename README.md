@@ -6,8 +6,6 @@ Modbus RTU packet sniffer
 Print all packets on bus from either slave or master and writes them to a logfile.
 Useful for sniffing packets between two devices to ensure correct operation.
 
-Simple command line tool that prints results to the terminal.
-
 Documentation
 -------------
 
