@@ -873,7 +873,7 @@ if __name__ == "__main__":
     log_to_file = False
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:],"hpl:b:r:t",["help", "port=", "baudrate=",  "parity=", "timeout=", "log-to-file"])
+        opts, args = getopt.getopt(sys.argv[1:],"hp:b:r:t:l",["help", "port=", "baudrate=",  "parity=", "timeout=", "log-to-file"])
     except getopt.GetoptError as e:
         printHelp(baud, timeout)
         sys.exit(2)
