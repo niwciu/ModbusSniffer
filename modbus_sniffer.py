@@ -875,11 +875,11 @@ if __name__ == "__main__":
     try:
         opts, args = getopt.getopt(sys.argv[1:],"hpl:b:r:t",["help", "port=", "baudrate=",  "parity=", "timeout=", "log-to-file"])
     except getopt.GetoptError as e:
-        printHelp(baud, timeout)
+        printHelp(baud, parity, log_to_file, timeout)
         sys.exit(2)
     for opt, arg in opts:
         if opt in ("-h", "--help"):
-            printHelp(baud, timeout)
+            printHelp(baud, parity, log_to_file, timeout)
             sys.exit()
         elif opt in ("-p", "--port"):
             port = arg
