@@ -823,8 +823,8 @@ def printHelp(baud, parity, log_to_file, timeout):
     print("  -p, --port        select the serial port (Required)")
     print("  -b, --baudrate    set the communication baud rate, default = {} (Option)".format(baud))
     print("  -r, --parity      select parity, default = {} (Option)".format(parity))
-    print("  -t, --timeout     override the calculated inter frame timeout, default = {}s (Option)".format(log_to_file))
-    print("  -l, --log-to-file console log is written to file, default = {}s (Option)".format(timeout))
+    print("  -t, --timeout     override the calculated inter frame timeout, default = {}s (Option)".format(timeout))
+    print("  -l, --log-to-file console log is written to file, default = {} (Option)".format(log_to_file))
     print("  -h, --help        print the documentation")
     print("")
     # print("  python3 {} -p <serial port> [-b baudrate, default={}] [-t timeout, default={}]".format(sys.argv[0], baud, timeout))
@@ -873,7 +873,7 @@ if __name__ == "__main__":
     log_to_file = False
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:],"hpl:b:r:t",["help", "port=", "baudrate=",  "parity=", "timeout=", "log-to-file"])
+        opts, args = getopt.getopt(sys.argv[1:],"hp:b:r:t:l",["help", "port=", "baudrate=",  "parity=", "timeout=", "log-to-file"])
     except getopt.GetoptError as e:
         printHelp(baud, parity, log_to_file, timeout)
         sys.exit(2)
