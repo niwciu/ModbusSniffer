@@ -201,7 +201,10 @@ class SerialSnooper:
                                         functionCodeMessage = 'Read Coils'
                                     else:
                                         functionCodeMessage = 'Read Discrete Inputs'
-                                    log.info("Slave\t-> ID: {}, {}: 0x{:02x}, Read byte count: {}, Read data: [{}]".format(unitIdentifier, functionCodeMessage, functionCode, readByteCount, " ".join(["{:02x}".format(x) for x in readData])))
+                                        log.info("Slave\t-> ID: {}, {}: 0x{:02x}, Read byte count: {}, Read data: [{}]".format(
+                                            unitIdentifier, functionCodeMessage, functionCode, readByteCount, 
+                                            ", ".join([str(int.from_bytes(readData[i:i+2], byteorder='big')) for i in range(0, len(readData), 2)])
+                                        ))
                                     modbusdata = modbusdata[bufferIndex:]
                                     bufferIndex = 0
                             else:
@@ -275,7 +278,10 @@ class SerialSnooper:
                                         functionCodeMessage = 'Read Holding Registers'
                                     else:
                                         functionCodeMessage = 'Read Input Registers'
-                                    log.info("Slave\t-> ID: {}, {}: 0x{:02x}, Read byte count: {}, Read data: [{}]".format(unitIdentifier, functionCodeMessage, functionCode, readByteCount, " ".join(["{:02x}".format(x) for x in readData])))
+                                    log.info("Slave\t-> ID: {}, {}: 0x{:02x}, Read byte count: {}, Read data: [{}]".format(
+                                        unitIdentifier, functionCodeMessage, functionCode, readByteCount, 
+                                        ", ".join([str(int.from_bytes(readData[i:i+2], byteorder='big')) for i in range(0, len(readData), 2)])
+                                    ))
                                     modbusdata = modbusdata[bufferIndex:]
                                     bufferIndex = 0
                             else:
@@ -310,7 +316,10 @@ class SerialSnooper:
                             request = True
                             responce = False
                             error = False
-                            log.info("Master\t-> ID: {}, Write Single Coil: 0x{:02x}, Write address: {}, Write data: [{}]".format(unitIdentifier, functionCode, writeAddress, " ".join(["{:02x}".format(x) for x in writeData])))
+                            log.info("Master\t-> ID: {}, Write Single Coil: 0x{:02x}, Write address: {}, Write data: [{}]".format(
+                                unitIdentifier, functionCode, writeAddress, 
+                                ", ".join([str(int.from_bytes(writeData[i:i+2], byteorder='big')) for i in range(0, len(writeData), 2)])
+                            ))
                             modbusdata = modbusdata[bufferIndex:]
                             bufferIndex = 0
                     else:
@@ -369,7 +378,10 @@ class SerialSnooper:
                             request = True
                             responce = False
                             error = False
-                            log.info("Master\t-> ID: {}, Write Single Register: 0x{:02x}, Write address: {}, Write data: [{}]".format(unitIdentifier, functionCode, writeAddress, " ".join(["{:02x}".format(x) for x in writeData])))
+                            log.info("Master\t-> ID: {}, Write Single Register: 0x{:02x}, Write address: {}, Write data: [{}]".format(
+                                unitIdentifier, functionCode, writeAddress, 
+                                ", ".join([str(int.from_bytes(writeData[i:i+2], byteorder='big')) for i in range(0, len(writeData), 2)])
+                            ))
                             modbusdata = modbusdata[bufferIndex:]
                             bufferIndex = 0
                     else:
@@ -454,7 +466,10 @@ class SerialSnooper:
                                 request = True
                                 responce = False
                                 error = False
-                                log.info("Master\t-> ID: {}, Write Multiple Coils: 0x{:02x}, Write address: {}, Write quantity: {}, Write data: [{}]".format(unitIdentifier, functionCode, writeAddress, writeQuantity, " ".join(["{:02x}".format(x) for x in writeData])))
+                                log.info("Master\t-> ID: {}, Write Multiple Coils: 0x{:02x}, Write address: {}, Write quantity: {}, Write data: [{}]".format(
+                                    unitIdentifier, functionCode, writeAddress, writeQuantity, 
+                                    ", ".join([str(int.from_bytes(writeData[i:i+2], byteorder='big')) for i in range(0, len(writeData), 2)])
+                                ))
                                 modbusdata = modbusdata[bufferIndex:]
                                 bufferIndex = 0
                         else:
@@ -527,7 +542,10 @@ class SerialSnooper:
                                 request = True
                                 responce = False
                                 error = False
-                                log.info("Master\t-> ID: {}, Write Multiple registers: 0x{:02x}, Write address: {}, Write quantity: {}, Write data: [{}]".format(unitIdentifier, functionCode, writeAddress, writeQuantity, " ".join(["{:02x}".format(x) for x in writeData])))
+                                log.info("Master\t-> ID: {}, Write Multiple registers: 0x{:02x}, Write address: {}, Write quantity: {}, Write data: [{}]".format(
+                                    unitIdentifier, functionCode, writeAddress, writeQuantity, 
+                                    ", ".join([str(int.from_bytes(writeData[i:i+2], byteorder='big')) for i in range(0, len(writeData), 2)])
+                                ))
                                 modbusdata = modbusdata[bufferIndex:]
                                 bufferIndex = 0
                         else:
@@ -645,7 +663,10 @@ class SerialSnooper:
                                 request = True
                                 responce = False
                                 error = False
-                                log.info("Master\t-> ID: {}, Read/Write Multiple registers: 0x{:02x}, Read address: {}, Read Quantity: {}, Write address: {}, Write quantity: {}, Write data: [{}]".format(unitIdentifier, functionCode, readAddress, writeAddress, readQuantity, writeQuantity, " ".join(["{:02x}".format(x) for x in writeData])))
+                                log.info("Master\t-> ID: {}, Read/Write Multiple registers: 0x{:02x}, Read address: {}, Read Quantity: {}, Write address: {}, Write quantity: {}, Write data: [{}]".format(
+                                    unitIdentifier, functionCode, readAddress, readQuantity, writeAddress, writeQuantity, 
+                                    ", ".join([str(int.from_bytes(writeData[i:i+2], byteorder='big')) for i in range(0, len(writeData), 2)])
+                                ))
                                 modbusdata = modbusdata[bufferIndex:]
                                 bufferIndex = 0
                         else:
@@ -681,7 +702,10 @@ class SerialSnooper:
                                     request = False
                                     responce = True
                                     error = False
-                                    log.info("Slave\t-> ID: {}, Read/Write Multiple registers: 0x{:02x}, Read byte count: {}, Read data: [{}]".format(unitIdentifier, functionCode, readByteCount, " ".join(["{:02x}".format(x) for x in readData])))
+                                    log.info("Slave\t-> ID: {}, Read/Write Multiple registers: 0x{:02x}, Read byte count: {}, Read data: [{}]".format(
+                                        unitIdentifier, functionCode, readByteCount, 
+                                        ", ".join([str(int.from_bytes(readData[i:i+2], byteorder='big')) for i in range(0, len(readData), 2)])
+                                    ))                                  
                                     modbusdata = modbusdata[bufferIndex:]
                                     bufferIndex = 0
                             else:
