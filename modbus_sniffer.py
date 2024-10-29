@@ -151,7 +151,7 @@ class SerialSnooper:
                         readQuantity = (modbusdata[bufferIndex] * 0x0100) + modbusdata[bufferIndex + 1]
                         bufferIndex += 2
                         # CRC16 (2)
-                        crc16 = (modbusdata[bufferIndex] * 0x0100) + modbusdata[bufferIndex + 1]
+                        crc16 = self.read_uint16_le(modbusdata, bufferIndex)
                         metCRC16 = self.calcCRC16(modbusdata, bufferIndex)
                         bufferIndex += 2
                         if crc16 == metCRC16:
@@ -190,7 +190,7 @@ class SerialSnooper:
                                     bufferIndex += 1
                                     index += 1
                                 # CRC16 (2)
-                                crc16 = (modbusdata[bufferIndex] * 0x0100) + modbusdata[bufferIndex + 1]
+                                crc16 = self.read_uint16_le(modbusdata, bufferIndex)
                                 metCRC16 = self.calcCRC16(modbusdata, bufferIndex)
                                 bufferIndex += 2
                                 if crc16 == metCRC16:
@@ -229,7 +229,7 @@ class SerialSnooper:
                         readQuantity = (modbusdata[bufferIndex] * 0x0100) + modbusdata[bufferIndex + 1]
                         bufferIndex += 2
                         # CRC16 (2)
-                        crc16 = (modbusdata[bufferIndex] * 0x0100) + modbusdata[bufferIndex + 1]
+                        crc16 = self.read_uint16_le(modbusdata, bufferIndex)
                         metCRC16 = self.calcCRC16(modbusdata, bufferIndex)
                         bufferIndex += 2
                         if crc16 == metCRC16:
@@ -267,7 +267,7 @@ class SerialSnooper:
                                     bufferIndex += 1
                                     index += 1
                                 # CRC16 (2)
-                                crc16 = (modbusdata[bufferIndex] * 0x0100) + modbusdata[bufferIndex + 1]
+                                crc16 = self.read_uint16_le(modbusdata, bufferIndex)
                                 metCRC16 = self.calcCRC16(modbusdata, bufferIndex)
                                 bufferIndex += 2
                                 if crc16 == metCRC16:
@@ -309,7 +309,7 @@ class SerialSnooper:
                         writeData.append(modbusdata[bufferIndex])
                         bufferIndex += 1
                         # CRC16 (2)
-                        crc16 = (modbusdata[bufferIndex] * 0x0100) + modbusdata[bufferIndex + 1]
+                        crc16 = self.read_uint16_le(modbusdata, bufferIndex)
                         metCRC16 = self.calcCRC16(modbusdata, bufferIndex)
                         bufferIndex += 2
                         if crc16 == metCRC16:
@@ -338,7 +338,7 @@ class SerialSnooper:
                             writeAddress = (modbusdata[bufferIndex] * 0x0100) + modbusdata[bufferIndex + 1]
                             bufferIndex += 2
                             # CRC16 (2)
-                            crc16 = (modbusdata[bufferIndex] * 0x0100) + modbusdata[bufferIndex + 1]
+                            crc16 = self.read_uint16_le(modbusdata, bufferIndex)
                             metCRC16 = self.calcCRC16(modbusdata, bufferIndex)
                             bufferIndex += 2
                             if crc16 == metCRC16:
@@ -371,7 +371,7 @@ class SerialSnooper:
                         writeData.append(modbusdata[bufferIndex])
                         bufferIndex += 1
                         # CRC16 (2)
-                        crc16 = (modbusdata[bufferIndex] * 0x0100) + modbusdata[bufferIndex + 1]
+                        crc16 = self.read_uint16_le(modbusdata, bufferIndex)
                         metCRC16 = self.calcCRC16(modbusdata, bufferIndex)
                         bufferIndex += 2
                         if crc16 == metCRC16:
@@ -405,7 +405,7 @@ class SerialSnooper:
                             writeData.append(modbusdata[bufferIndex])
                             bufferIndex += 1
                             # CRC16 (2)
-                            crc16 = (modbusdata[bufferIndex] * 0x0100) + modbusdata[bufferIndex + 1]
+                            crc16 = self.read_uint16_le(modbusdata, bufferIndex)
                             metCRC16 = self.calcCRC16(modbusdata, bufferIndex)
                             bufferIndex += 2
                             if crc16 == metCRC16:
@@ -459,7 +459,7 @@ class SerialSnooper:
                                 bufferIndex += 1
                                 index += 1
                             # CRC16 (2)
-                            crc16 = (modbusdata[bufferIndex] * 0x0100) + modbusdata[bufferIndex + 1]
+                            crc16 = self.read_uint16_le(modbusdata, bufferIndex)
                             metCRC16 = self.calcCRC16(modbusdata, bufferIndex)
                             bufferIndex += 2
                             if crc16 == metCRC16:
@@ -493,7 +493,7 @@ class SerialSnooper:
                             writeQuantity = (modbusdata[bufferIndex] * 0x0100) + modbusdata[bufferIndex + 1]
                             bufferIndex += 2
                             # CRC16 (2)
-                            crc16 = (modbusdata[bufferIndex] * 0x0100) + modbusdata[bufferIndex + 1]
+                            crc16 = self.read_uint16_le(modbusdata, bufferIndex)
                             metCRC16 = self.calcCRC16(modbusdata, bufferIndex)
                             bufferIndex += 2
                             if crc16 == metCRC16:
@@ -535,7 +535,7 @@ class SerialSnooper:
                                 bufferIndex += 1
                                 index += 1
                             # CRC16 (2)
-                            crc16 = (modbusdata[bufferIndex] * 0x0100) + modbusdata[bufferIndex + 1]
+                            crc16 = self.read_uint16_le(modbusdata, bufferIndex)
                             metCRC16 = self.calcCRC16(modbusdata, bufferIndex)
                             bufferIndex += 2
                             if crc16 == metCRC16:
@@ -569,7 +569,7 @@ class SerialSnooper:
                             writeQuantity = (modbusdata[bufferIndex] * 0x0100) + modbusdata[bufferIndex + 1]
                             bufferIndex += 2
                             # CRC16 (2)
-                            crc16 = (modbusdata[bufferIndex] * 0x0100) + modbusdata[bufferIndex + 1]
+                            crc16 = self.read_uint16_le(modbusdata, bufferIndex)
                             metCRC16 = self.calcCRC16(modbusdata, bufferIndex)
                             bufferIndex += 2
                             if crc16 == metCRC16:
@@ -596,7 +596,7 @@ class SerialSnooper:
                             bufferIndex += 1
                             
                             # CRC16 (2)
-                            crc16 = (modbusdata[bufferIndex] * 0x0100) + modbusdata[bufferIndex + 1]
+                            crc16 = self.read_uint16_le(modbusdata, bufferIndex)
                             metCRC16 = self.calcCRC16(modbusdata, bufferIndex)
                             bufferIndex += 2
                             if crc16 == metCRC16:
@@ -656,7 +656,7 @@ class SerialSnooper:
                                 bufferIndex += 1
                                 index += 1
                             # CRC16 (2)
-                            crc16 = (modbusdata[bufferIndex] * 0x0100) + modbusdata[bufferIndex + 1]
+                            crc16 = self.read_uint16_le(modbusdata, bufferIndex)
                             metCRC16 = self.calcCRC16(modbusdata, bufferIndex)
                             bufferIndex += 2
                             if crc16 == metCRC16:
@@ -695,7 +695,7 @@ class SerialSnooper:
                                     bufferIndex += 1
                                     index += 1
                                 # CRC16 (2)
-                                crc16 = (modbusdata[bufferIndex] * 0x0100) + modbusdata[bufferIndex + 1]
+                                crc16 = self.read_uint16_le(modbusdata, bufferIndex)
                                 metCRC16 = self.calcCRC16(modbusdata, bufferIndex)
                                 bufferIndex += 2
                                 if crc16 == metCRC16:
@@ -735,7 +735,7 @@ class SerialSnooper:
                         bufferIndex += 1
                         
                         # CRC16 (2)
-                        crc16 = (modbusdata[bufferIndex] * 0x0100) + modbusdata[bufferIndex + 1]
+                        crc16 = self.read_uint16_le(modbusdata, bufferIndex)
                         metCRC16 = self.calcCRC16(modbusdata, bufferIndex)
                         bufferIndex += 2
                         if crc16 == metCRC16:
@@ -770,9 +770,15 @@ class SerialSnooper:
     # --------------------------------------------------------------------------- #
     # Calculate the modbus CRC
     # --------------------------------------------------------------------------- #
+    def read_uint16_le(self, data, index):
+        return data[index] + (data[index + 1] << 8)    # Calculate the CRC on the provided data slice up to the specified size
+    
     def calcCRC16(self, data, size):
-    # Calculate the CRC on the provided data slice up to the specified size
-        return modbus_crc16(data[:size])
+        crc = modbus_crc16(data[:size])
+        # Swap bytes to match Modbus little-endian CRC
+        crc_le = ((crc & 0xFF) << 8) | (crc >> 8)
+        return crc_le
+
 
 # --------------------------------------------------------------------------- #
 # Print the usage help
