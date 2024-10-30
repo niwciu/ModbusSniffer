@@ -908,6 +908,8 @@ def printHelp(baud, parity, log_to_file, timeout):
         timeout = calcTimeout(baud)
     print("\nUsage:")
     print("  python modbus_sniffer.py [arguments]")
+    print("OR")
+    print("  .\modbus_sniffer.exe [arguments]")
     print("")
     print("Arguments:")
     print("  -p, --port        select the serial port (Required)")
