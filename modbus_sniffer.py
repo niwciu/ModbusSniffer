@@ -59,15 +59,39 @@ def configure_logging(log_to_file):
 # --------------------------------------------------------------------------- #
 class SerialSnooper:
 
-    def __init__(self, port, baud=9600, parity=serial.PARITY_EVEN, timeout=0, raw_log=False):
+    def __init__(
+        self, 
+        port, 
+        baud=9600, 
+        parity=serial.PARITY_EVEN, 
+        timeout=0, 
+        raw_log=False,
+        raw_only=False        # <-- UPDATED: Add raw_only argument
+    ):
         self.port = port
         self.baud = baud
         self.timeout = timeout
         self.parity = parity
-        self.raw_log = raw_log  # Add raw_log to instance variables
+        self.raw_log = raw_log
+        self.raw_only = raw_only  # <-- UPDATED: Store this new parameter
 
-        log.info("Opening serial interface: \n" + "\tport: {} \n".format(port) + "\tbaudrate: {}\n".format(baud) + "\tbytesize: 8\n" + "\tparity: {}\n".format(parity) + "\tstopbits: 1\n" + "\ttimeout: {}\n".format(timeout))
-        self.connection = serial.Serial(port=port, baudrate=baud, bytesize=serial.EIGHTBITS, parity=parity, stopbits=serial.STOPBITS_ONE, timeout=timeout)
+        log.info(
+            "Opening serial interface: \n" +
+            f"\tport: {port}\n" +
+            f"\tbaudrate: {baud}\n" +
+            "\tbytesize: 8\n" +
+            f"\tparity: {parity}\n" +
+            "\tstopbits: 1\n" +
+            f"\ttimeout: {timeout}\n"
+        )
+        self.connection = serial.Serial(
+            port=port,
+            baudrate=baud,
+            bytesize=serial.EIGHTBITS,
+            parity=parity,
+            stopbits=serial.STOPBITS_ONE,
+            timeout=timeout
+        )
         log.debug(self.connection)
 
         # Global variables
@@ -91,19 +115,34 @@ class SerialSnooper:
         return self.connection.read(n)
 
     # --------------------------------------------------------------------------- #
-    # Bufferise the data and call the decoder if the interframe timeout occur.
+    # Buffer the data and call the decoder if the interframe timeout occurs.
     # --------------------------------------------------------------------------- #
     def process_data(self, data):
-        # Remove raw logging from here
+        """
+        In normal mode: accumulate the data into self.data,
+        and decode on inter-frame timeouts.
+        
+        In raw-only mode: just logs data as hex and discards it.
+        """
+        # <-- UPDATED: If raw_only is True, skip decoding.
+        if self.raw_only and data:
+            # If the user wants to log raw, produce a hex representation
+            raw_message = ' '.join(f"{byte:02x}" for byte in data)
+            log.info(f"Raw RS485 data: {raw_message}")
+            return  # skip decode entirely
+        
         if len(data) <= 0:
+            # Check if we have something that might form a valid modbus frame
             if len(self.data) > 2:
                 self.data = self.decodeModbus(self.data)
             return
+        
+        # Otherwise, accumulate and decode as normal
         for dat in data:
             self.data.append(dat)
 
     # --------------------------------------------------------------------------- #
-    # Debuffer and decode the modbus frames (Request, Responce, Exception)
+    # Debuffer and decode the modbus frames (Request, Response, Exception)
     # --------------------------------------------------------------------------- #
     def decodeModbus(self, data):
         modbusdata = data
@@ -909,34 +948,23 @@ def printHelp(baud, parity, log_to_file, timeout):
     print("\nUsage:")
     print("  python modbus_sniffer.py [arguments]")
     print("OR")
-    print("  .\modbus_sniffer.exe [arguments]")
+    print("  .\\modbus_sniffer.exe [arguments]")
     print("")
     print("Arguments:")
     print("  -p, --port        select the serial port (Required)")
-    print("  -b, --baudrate    set the communication baud rate, default = {} (Option)".format(baud))
-    print("  -r, --parity      select parity, default = {} (Option)".format(parity))
-    print("  -t, --timeout     override the calculated inter frame timeout, default = {}s (Option)".format(timeout))
-    print("  -l, --log-to-file console log is written to file, default = {} (Option)".format(log_to_file))
-    print("  -R, --raw         in addition to -l, also raw messages are logged, default = {} (Option)".format(raw_log))
+    print(f"  -b, --baudrate    set the communication baud rate, default = {baud} (Option)")
+    print(f"  -r, --parity      select parity, default = {parity} (Option)")
+    print(f"  -t, --timeout     override the calculated inter frame timeout, default = {timeout}s (Option)")
+    print(f"  -l, --log-to-file console log is written to file, default = {log_to_file} (Option)")
+    print(f"  -R, --raw         in addition to -l, also raw messages are logged, default = False (Option)")
+    print("  -X, --raw-only    log raw traffic only; skip modbus decode (Option)")  # <-- UPDATED
     print("  -h, --help        print the documentation")
     print("")
-    # print("  python3 {} -p <serial port> [-b baudrate, default={}] [-t timeout, default={}]".format(sys.argv[0], baud, timeout))
 
 # --------------------------------------------------------------------------- #
 # Calculate the timeout with the baudrate
 # --------------------------------------------------------------------------- #
 def calcTimeout(baud):
-    # Modbus states that a baud rate higher than 19200 must use a 1.75 ms for a frame delay.
-    # For baud rates below 19200 the timeing is more critical and has to be calculated.
-    # In modbus a character is made of a data byte that appends a start bit, stop bit,
-    # and parity bit which mean in RTU mode, there are 11 bits per character.
-    # Though the "Character-Time" calculation is 11 bits/char / [baud rate] bits/sec.
-    # Modbus standard states a frame delay must be 3.5T or 3.5 times longer than 
-    # a normal character.
-    # E.g. for 9600 baud:
-    # "Character-Time": 11 / 9600 = 0.0011458s 
-    # "Frame delay": 11 * 3.5 = 38.5
-    #                38.5 / 9600 = 0.0040104s
     if (baud < 19200):
         timeout = 33 / baud # changed the ratio from 3.5 to 3
     else:
@@ -944,8 +972,7 @@ def calcTimeout(baud):
     return timeout
 
 # --------------------------------------------------------------------------- #
-# configure a clean exit (even with the use of kill, 
-# may be useful if saving the data to a file)
+# configure a clean exit
 # --------------------------------------------------------------------------- #
 def signal_handler(sig, frame):
     print('\nGoodbye\n')
@@ -965,9 +992,14 @@ if __name__ == "__main__":
     parity = serial.PARITY_EVEN
     log_to_file = False
     raw_log = False
+    raw_only = False
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hp:b:r:t:lR", ["help", "port=", "baudrate=", "parity=", "timeout=", "log-to-file", "raw"])
+        opts, args = getopt.getopt(
+            sys.argv[1:], 
+            "hp:b:r:t:lRX", 
+            ["help", "port=", "baudrate=", "parity=", "timeout=", "log-to-file", "raw", "raw-only"]
+        )
     except getopt.GetoptError as e:
         printHelp(baud, parity, log_to_file, timeout)
         sys.exit(2)
@@ -993,18 +1025,25 @@ if __name__ == "__main__":
         elif opt in ("-R", "--raw"):
             raw_log = True
             log_to_file = True  # Implicitly enable log-to-file
+        elif opt in ("-X", "--raw-only"):
+            raw_only = True
+            # Implicitly enable raw_log so we can see raw hex
+            raw_log = True
+            # Also, might force log_to_file if desired:
+            log_to_file = True
 
     log = configure_logging(log_to_file)
 
-    if port == None:
-        print("Serial Port not defined please use:")
+    if port is None:
+        print("Serial Port not defined, please use:")
         printHelp(baud, parity, log_to_file, timeout)
         sys.exit(2)
 
-    if timeout == None:
+    if timeout is None:
         timeout = calcTimeout(baud)
 
-    with SerialSnooper(port, baud, parity, timeout, raw_log) as sniffer:
+    # Pass raw_only to the constructor
+    with SerialSnooper(port, baud, parity, timeout, raw_log=raw_log, raw_only=raw_only) as sniffer:
         while True:
             data = sniffer.read_raw()
             sniffer.process_data(data)
