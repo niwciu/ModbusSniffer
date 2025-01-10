@@ -4,8 +4,8 @@
 Python modbus sniffer implementation
 ---------------------------------------------------------------------------
 
-The following is an modbus RTU sniffer program,
-made without the use of modbus specific library.
+The following is a modbus RTU sniffer program,
+made without the use of any modbus-specific library.
 """
 # --------------------------------------------------------------------------- #
 # import the various needed libraries
@@ -16,6 +16,7 @@ import getopt
 import logging
 import serial
 from datetime import datetime
+from logging.handlers import TimedRotatingFileHandler  # <-- NEW
 
 # --------------------------------------------------------------------------- #
 # configure the logging system
@@ -35,8 +36,12 @@ class MyFormatter(logging.Formatter):
             }.get(record.levelno, 0)
             self._style._fmt = f"%(asctime)-15s \033[{color}m%(levelname)-8s %(threadName)-15s-%(module)-15s:%(lineno)-8s\033[0m: %(message)s"
         return super().format(record)
-    
-def configure_logging(log_to_file):
+
+def configure_logging(log_to_file, daily_file=False):
+    """
+    Configure logging to console, plus optionally to a file.
+    If daily_file=True, create a new log file at midnight.
+    """
     log = logging.getLogger()
     log.setLevel(logging.INFO)
 
@@ -46,11 +51,23 @@ def configure_logging(log_to_file):
     log.addHandler(console_handler)
 
     if log_to_file:
-        # File handler with custom formatter, using current datetime for filename
-        current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        file_handler = logging.FileHandler(f'log_{current_time}.log')
-        file_handler.setFormatter(MyFormatter())
-        log.addHandler(file_handler)
+        if daily_file:
+            # Use a TimedRotatingFileHandler to rotate logs at midnight
+            handler = TimedRotatingFileHandler(
+                "modbus_sniffer.log",  # base filename
+                when='midnight',
+                interval=1,
+                backupCount=7,        # keep 7 days of logs, adjust as desired
+                encoding='utf-8'
+            )
+            handler.setFormatter(MyFormatter())
+            log.addHandler(handler)
+        else:
+            # File handler with custom formatter, using current datetime for filename
+            current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            file_handler = logging.FileHandler(f'log_{current_time}.log', encoding='utf-8')
+            file_handler.setFormatter(MyFormatter())
+            log.addHandler(file_handler)
 
     return log
 
@@ -58,31 +75,30 @@ def configure_logging(log_to_file):
 # declare the sniffer
 # --------------------------------------------------------------------------- #
 class SerialSnooper:
-
     def __init__(
-        self, 
-        port, 
-        baud=9600, 
-        parity=serial.PARITY_EVEN, 
-        timeout=0, 
+        self,
+        port,
+        baud=9600,
+        parity=serial.PARITY_EVEN,
+        timeout=0,
         raw_log=False,
-        raw_only=False        # <-- UPDATED: Add raw_only argument
+        raw_only=False
     ):
         self.port = port
         self.baud = baud
         self.timeout = timeout
         self.parity = parity
         self.raw_log = raw_log
-        self.raw_only = raw_only  # <-- UPDATED: Store this new parameter
+        self.raw_only = raw_only
 
         log.info(
-            "Opening serial interface: \n" +
-            f"\tport: {port}\n" +
-            f"\tbaudrate: {baud}\n" +
-            "\tbytesize: 8\n" +
-            f"\tparity: {parity}\n" +
-            "\tstopbits: 1\n" +
-            f"\ttimeout: {timeout}\n"
+            "Opening serial interface: \n"
+            + f"\tport: {port}\n"
+            + f"\tbaudrate: {baud}\n"
+            + "\tbytesize: 8\n"
+            + f"\tparity: {parity}\n"
+            + "\tstopbits: 1\n"
+            + f"\ttimeout: {timeout}\n"
         )
         self.connection = serial.Serial(
             port=port,
@@ -90,7 +106,7 @@ class SerialSnooper:
             bytesize=serial.EIGHTBITS,
             parity=parity,
             stopbits=serial.STOPBITS_ONE,
-            timeout=timeout
+            timeout=timeout,
         )
         log.debug(self.connection)
 
@@ -110,7 +126,7 @@ class SerialSnooper:
 
     def close(self):
         self.connection.close()
-    
+
     def read_raw(self, n=1):
         return self.connection.read(n)
 
@@ -121,22 +137,21 @@ class SerialSnooper:
         """
         In normal mode: accumulate the data into self.data,
         and decode on inter-frame timeouts.
-        
+
         In raw-only mode: just logs data as hex and discards it.
         """
-        # <-- UPDATED: If raw_only is True, skip decoding.
         if self.raw_only and data:
             # If the user wants to log raw, produce a hex representation
             raw_message = ' '.join(f"{byte:02x}" for byte in data)
             log.info(f"Raw RS485 data: {raw_message}")
             return  # skip decode entirely
-        
+
         if len(data) <= 0:
             # Check if we have something that might form a valid modbus frame
             if len(self.data) > 2:
                 self.data = self.decodeModbus(self.data)
             return
-        
+
         # Otherwise, accumulate and decode as normal
         for dat in data:
             self.data.append(dat)
@@ -175,25 +190,22 @@ class SerialSnooper:
                 # Function Code
                 functionCode = modbusdata[bufferIndex]
                 bufferIndex += 1
+
                 # FC01 (0x01) Read Coils  FC02 (0x02) Read Discrete Inputs
                 if functionCode in (1, 2):
-                    # Request size: UnitIdentifier (1) + FunctionCode (1) + ReadAddress (2) + ReadQuantity (2) + CRC (2)
-                    expectedLenght = 8 # 8
+                    # Request size
+                    expectedLenght = 8
                     if len(modbusdata) >= (frameStartIndex + expectedLenght):
                         bufferIndex = frameStartIndex + 2
-                        # Read Address (2)
                         readAddress = (modbusdata[bufferIndex] * 0x0100) + modbusdata[bufferIndex + 1]
                         bufferIndex += 2
-                        # Read Quantity (2)
                         readQuantity = (modbusdata[bufferIndex] * 0x0100) + modbusdata[bufferIndex + 1]
                         bufferIndex += 2
-                        # CRC16 (2)
                         crc16 = (modbusdata[bufferIndex] * 0x0100) + modbusdata[bufferIndex + 1]
                         metCRC16 = self.calcCRC16(modbusdata, bufferIndex)
                         bufferIndex += 2
                         if crc16 == metCRC16:
                             if self.raw_log:
-                                # Log the raw message
                                 raw_message = ' '.join(f"{byte:02x}" for byte in modbusdata[frameStartIndex:bufferIndex])
                                 log.info(f"Raw Message: {raw_message}")
                             if self.trashdata:
@@ -208,36 +220,40 @@ class SerialSnooper:
                                 functionCodeMessage = 'Read Coils'
                             else:
                                 functionCodeMessage = 'Read Discrete Inputs'
-                            log.info("Master\t\t-> ID: {}, {}: 0x{:02x}, Read address: {}, Read Quantity: {}".format(unitIdentifier, functionCodeMessage, functionCode, readAddress, readQuantity))
+                            log.info(
+                                "Master\t\t-> ID: {}, {}: 0x{:02x}, Read address: {}, Read Quantity: {}".format(
+                                    unitIdentifier, functionCodeMessage, functionCode, readAddress, readQuantity
+                                )
+                            )
                             modbusdata = modbusdata[bufferIndex:]
                             bufferIndex = 0
+                        else:
+                            # CRC mismatch; treat as trash data or ignore
+                            pass
                     else:
                         needMoreData = True
-                    
-                    if (request == False):
-                        # Responce size: UnitIdentifier (1) + FunctionCode (1) + ReadByteCount (1) + ReadData (n) + CRC (2)
-                        expectedLenght = 7 # 5 + n (n >= 2)
+
+                    if request == False:
+                        # Responce size
+                        expectedLenght = 7  # 5 + n
                         if len(modbusdata) >= (frameStartIndex + expectedLenght):
                             bufferIndex = frameStartIndex + 2
-                            # Read Byte Count (1)
                             readByteCount = modbusdata[bufferIndex]
                             bufferIndex += 1
-                            expectedLenght = (5 + readByteCount)
+                            expectedLenght = 5 + readByteCount
                             if len(modbusdata) >= (frameStartIndex + expectedLenght):
-                                # Read Data (n)
-                                index = 1
-                                while index <= readByteCount:
+                                for index in range(readByteCount):
                                     readData.append(modbusdata[bufferIndex])
                                     bufferIndex += 1
-                                    index += 1
-                                # CRC16 (2)
+
                                 crc16 = (modbusdata[bufferIndex] * 0x0100) + modbusdata[bufferIndex + 1]
                                 metCRC16 = self.calcCRC16(modbusdata, bufferIndex)
                                 bufferIndex += 2
                                 if crc16 == metCRC16:
                                     if self.raw_log:
-                                        # Log the raw message
-                                        raw_message = ' '.join(f"{byte:02x}" for byte in modbusdata[frameStartIndex:bufferIndex])
+                                        raw_message = ' '.join(
+                                            f"{byte:02x}" for byte in modbusdata[frameStartIndex:bufferIndex]
+                                        )
                                         log.info(f"Raw Message: {raw_message}")
                                     if self.trashdata:
                                         self.trashdata = False
@@ -250,12 +266,25 @@ class SerialSnooper:
                                         functionCodeMessage = 'Read Coils'
                                     else:
                                         functionCodeMessage = 'Read Discrete Inputs'
-                                        log.info("Slave\t-> ID: {}, {}: 0x{:02x}, Read byte count: {}, Read data: [{}]".format(
-                                            unitIdentifier, functionCodeMessage, functionCode, readByteCount, 
-                                            ", ".join([str(int.from_bytes(readData[i:i+2], byteorder='big')) for i in range(0, len(readData), 2)])
-                                        ))
+                                    log.info(
+                                        "Slave\t-> ID: {}, {}: 0x{:02x}, Read byte count: {}, Read data: [{}]".format(
+                                            unitIdentifier,
+                                            functionCodeMessage,
+                                            functionCode,
+                                            readByteCount,
+                                            ", ".join(
+                                                [
+                                                    str(int.from_bytes(readData[i : i + 2], byteorder='big'))
+                                                    for i in range(0, len(readData), 2)
+                                                ]
+                                            ),
+                                        )
+                                    )
                                     modbusdata = modbusdata[bufferIndex:]
                                     bufferIndex = 0
+                                else:
+                                    # CRC mismatch; treat as trash data or ignore
+                                    pass
                             else:
                                 needMoreData = True
                         else:
@@ -863,7 +892,9 @@ class SerialSnooper:
                     self.trashdataf += " {:02x}".format(modbusdata[frameStartIndex])
                 else:
                     self.trashdata = True
-                    self.trashdataf = "\033[33mWarning \033[0m: Ignoring data: [{:02x}".format(modbusdata[frameStartIndex])
+                    self.trashdataf = "\033[33mWarning \033[0m: Ignoring data: [{:02x}".format(
+                        modbusdata[frameStartIndex]
+                    )
                 bufferIndex = frameStartIndex + 1
                 modbusdata = modbusdata[bufferIndex:]
                 bufferIndex = 0
@@ -939,11 +970,12 @@ class SerialSnooper:
         metCRC16 = (crcHi * 0x0100) + crcLo
         return metCRC16
 
+
 # --------------------------------------------------------------------------- #
 # Print the usage help
 # --------------------------------------------------------------------------- #
-def printHelp(baud, parity, log_to_file, timeout):
-    if timeout == None:
+def printHelp(baud, parity, log_to_file, timeout, daily_file=False):
+    if timeout is None:
         timeout = calcTimeout(baud)
     print("\nUsage:")
     print("  python modbus_sniffer.py [arguments]")
@@ -957,7 +989,8 @@ def printHelp(baud, parity, log_to_file, timeout):
     print(f"  -t, --timeout     override the calculated inter frame timeout, default = {timeout}s (Option)")
     print(f"  -l, --log-to-file console log is written to file, default = {log_to_file} (Option)")
     print(f"  -R, --raw         in addition to -l, also raw messages are logged, default = False (Option)")
-    print("  -X, --raw-only    log raw traffic only; skip modbus decode (Option)")  # <-- UPDATED
+    print("  -X, --raw-only    log raw traffic only; skip modbus decode (Option)")
+    print(f"  -D, --daily-file  rotate logs daily at midnight, default = {daily_file} (Option)")  # <-- NEW
     print("  -h, --help        print the documentation")
     print("")
 
@@ -965,8 +998,8 @@ def printHelp(baud, parity, log_to_file, timeout):
 # Calculate the timeout with the baudrate
 # --------------------------------------------------------------------------- #
 def calcTimeout(baud):
-    if (baud < 19200):
-        timeout = 33 / baud # changed the ratio from 3.5 to 3
+    if baud < 19200:
+        timeout = 33 / baud  # changed the ratio from 3.5 to 3
     else:
         timeout = 0.001750
     return timeout
@@ -993,19 +1026,21 @@ if __name__ == "__main__":
     log_to_file = False
     raw_log = False
     raw_only = False
+    daily_file = False  # <-- NEW
 
     try:
         opts, args = getopt.getopt(
-            sys.argv[1:], 
-            "hp:b:r:t:lRX", 
-            ["help", "port=", "baudrate=", "parity=", "timeout=", "log-to-file", "raw", "raw-only"]
+            sys.argv[1:],
+            "hp:b:r:t:lRXD",
+            ["help", "port=", "baudrate=", "parity=", "timeout=", "log-to-file", "raw", "raw-only", "daily-file"],
         )
     except getopt.GetoptError as e:
-        printHelp(baud, parity, log_to_file, timeout)
+        printHelp(baud, parity, log_to_file, timeout, daily_file)
         sys.exit(2)
+
     for opt, arg in opts:
         if opt in ("-h", "--help"):
-            printHelp(baud, parity, log_to_file, timeout)
+            printHelp(baud, parity, log_to_file, timeout, daily_file)
             sys.exit()
         elif opt in ("-p", "--port"):
             port = arg
@@ -1031,18 +1066,20 @@ if __name__ == "__main__":
             raw_log = True
             # Also, might force log_to_file if desired:
             log_to_file = True
+        elif opt in ("-D", "--daily-file"):
+            daily_file = True
+            log_to_file = True  # Typically you'd want a file if you're rotating daily
 
-    log = configure_logging(log_to_file)
+    log = configure_logging(log_to_file, daily_file)
 
     if port is None:
         print("Serial Port not defined, please use:")
-        printHelp(baud, parity, log_to_file, timeout)
+        printHelp(baud, parity, log_to_file, timeout, daily_file)
         sys.exit(2)
 
     if timeout is None:
         timeout = calcTimeout(baud)
 
-    # Pass raw_only to the constructor
     with SerialSnooper(port, baud, parity, timeout, raw_log=raw_log, raw_only=raw_only) as sniffer:
         while True:
             data = sniffer.read_raw()
