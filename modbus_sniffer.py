@@ -7,6 +7,206 @@ Python modbus sniffer implementation
 The following is a modbus RTU sniffer program,
 made without the use of any modbus-specific library.
 """
+import csv
+import os
+from datetime import datetime
+
+import csv
+import os
+from datetime import datetime
+
+class CSVLogger:
+    def __init__(self, enable_csv=False, daily_file=False, output_dir=".", base_filename="modbus_data"):
+        """
+        :param enable_csv: Boolean - if False, this logger does nothing.
+        :param daily_file: Boolean - if True, rotate CSV daily (one file per day).
+        :param output_dir: Directory where CSV files should be created.
+        :param base_filename: The base name for CSV files; date_time will be appended.
+        """
+        self.enable_csv = enable_csv
+        self.daily_file = daily_file
+        self.output_dir = output_dir
+        self.base_filename = base_filename
+
+        # Keep an internal map of (slave_id, register_address) -> column index
+        self.register_map = {}
+
+        # Our running list of columns:
+        # 0: Timestamp
+        # 1: Slave ID
+        # 2: Operation  (READ/WRITE)
+        self.columns = ["Timestamp", "Slave ID", "Operation"]
+
+        # Internal references for file handle, CSV writer, etc.
+        self.csv_file = None
+        self.csv_writer = None
+
+        # Track the current date so we know when to rotate
+        self.current_date_str = None
+
+        if self.enable_csv:
+            self._open_csv_file()
+
+    def _get_date_str(self):
+        """Return YYYYMMDD for daily rotation checks."""
+        return datetime.now().strftime("%Y%m%d")
+
+    def _get_datetime_str(self):
+        """Return YYYYMMDD_HHMMSS for filenames."""
+        return datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    def _open_csv_file(self):
+        """Open (or reopen) the CSV file. Closes any previously open file."""
+        if self.csv_file:
+            self.csv_file.close()
+
+        # We always create a filename with date and time
+        date_time_str = self._get_datetime_str()
+        filename = f"{self.base_filename}_{date_time_str}.csv"
+
+        # Ensure output directory exists
+        os.makedirs(self.output_dir, exist_ok=True)
+        fullpath = os.path.join(self.output_dir, filename)
+
+        self.csv_file = open(fullpath, mode="w", newline="", encoding="utf-8")
+        self.csv_writer = csv.writer(self.csv_file)
+
+        # Always write the initial header
+        self.csv_writer.writerow(self.columns)
+        self.csv_file.flush()
+
+        # If we are using daily rotation, store the current date
+        if self.daily_file:
+            self.current_date_str = self._get_date_str()
+
+    def _check_daily_rotation(self):
+        """If daily_file is True, check if the date changed. If so, open a new file."""
+        if not self.daily_file:
+            return
+        current = self._get_date_str()
+        if current != self.current_date_str:
+            # Date changed => rotate
+            self._open_csv_file()
+
+    def _expand_header_for_registers(self, slave_id, start_register, quantity):
+        """
+        For each register in [start_register, start_register + quantity - 1],
+        ensure we have a column. If new columns are added, rewrite the ENTIRE file
+        so the updated header is the FIRST line.
+        """
+        changed = False
+        for offset in range(quantity):
+            reg_addr = start_register + offset
+            key = (slave_id, reg_addr)
+            if key not in self.register_map:
+                # Insert a new column
+                new_col_name = f"Reg_{slave_id}_{reg_addr}"
+                self.columns.append(new_col_name)
+                self.register_map[key] = len(self.columns) - 1
+                changed = True
+
+        if changed:
+            self._rewrite_file_with_new_header()
+
+    def _rewrite_file_with_new_header(self):
+        """
+        1) Close the file
+        2) Read all old data in memory
+        3) Create a new file with the same name
+        4) Write updated header
+        5) Remap old rows into the new columns
+        6) Append them
+        7) Reopen in append mode for further usage
+        """
+        if not self.csv_file:
+            return
+
+        # Step 1: close the file
+        self.csv_file.close()
+
+        # We can get the file path from .name
+        old_path = self.csv_file.name
+
+        # Step 2: read all old data in memory
+        with open(old_path, mode="r", encoding="utf-8") as f:
+            reader = list(csv.reader(f))
+
+        # The first row is the old header
+        old_header = reader[0] if reader else []
+        old_rows = reader[1:] if len(reader) > 1 else []
+
+        # Step 3: create a new file with the same path, truncated
+        with open(old_path, mode="w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            # Step 4: write updated header
+            writer.writerow(self.columns)
+
+            # Step 5 & 6: remap old rows
+            # old_header -> self.columns
+            # Build a map: old_col_name => old_col_index
+            old_col_map = {col_name: idx for idx, col_name in enumerate(old_header)}
+
+            # For each old row, build a new row with the new columns
+            for old_row in old_rows:
+                new_row = [""] * len(self.columns)
+                # We know the first N columns in old_header might match
+                for col_index, col_name in enumerate(old_header):
+                    if col_index < len(old_row):
+                        cell_value = old_row[col_index]
+                    else:
+                        cell_value = ""
+
+                    if col_name in old_col_map:
+                        # find the new index in self.columns
+                        if col_name in self.columns:
+                            new_index = self.columns.index(col_name)
+                            new_row[new_index] = cell_value
+
+                writer.writerow(new_row)
+
+        # Step 7: reopen the file in append mode
+        self.csv_file = open(old_path, mode="a", newline="", encoding="utf-8")
+        self.csv_writer = csv.writer(self.csv_file)
+
+    def log_data(self, timestamp, slave_id, operation, start_register, quantity, register_values):
+        """
+        Logs a single row with the given data to the CSV file.
+
+        :param timestamp:        String timestamp
+        :param slave_id:         The Modbus slave address
+        :param operation:        "READ" or "WRITE"
+        :param start_register:   The starting register/coil address
+        :param quantity:         How many registers/coils
+        :param register_values:  A list of integer values
+        """
+        if not self.enable_csv:
+            return
+
+        self._check_daily_rotation()
+        self._expand_header_for_registers(slave_id, start_register, quantity)
+
+        row = [""] * len(self.columns)
+        # Fill the fixed columns
+        row[0] = timestamp
+        row[1] = slave_id
+        row[2] = operation
+
+        # Fill register data
+        for i, val in enumerate(register_values):
+            reg_addr = start_register + i
+            col_idx = self.register_map.get((slave_id, reg_addr), None)
+            if col_idx is not None:
+                row[col_idx] = val
+
+        self.csv_writer.writerow(row)
+        self.csv_file.flush()
+
+    def close(self):
+        """Close the CSV file if open."""
+        if self.csv_file:
+            self.csv_file.close()
+            self.csv_file = None
+
 # --------------------------------------------------------------------------- #
 # import the various needed libraries
 # --------------------------------------------------------------------------- #
@@ -37,6 +237,12 @@ class MyFormatter(logging.Formatter):
             self._style._fmt = f"%(asctime)-15s \033[{color}m%(levelname)-8s %(threadName)-15s-%(module)-15s:%(lineno)-8s\033[0m: %(message)s"
         return super().format(record)
 
+def filename():
+    current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+    file_name = f'log_{current_time}.log'
+
+    return file_name
+
 def configure_logging(log_to_file, daily_file=False):
     """
     Configure logging to console, plus optionally to a file.
@@ -54,7 +260,7 @@ def configure_logging(log_to_file, daily_file=False):
         if daily_file:
             # Use a TimedRotatingFileHandler to rotate logs at midnight
             handler = TimedRotatingFileHandler(
-                "modbus_sniffer.log",  # base filename
+                filename(),  # base filename
                 when='midnight',
                 interval=1,
                 backupCount=7,        # keep 7 days of logs, adjust as desired
@@ -64,8 +270,7 @@ def configure_logging(log_to_file, daily_file=False):
             log.addHandler(handler)
         else:
             # File handler with custom formatter, using current datetime for filename
-            current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            file_handler = logging.FileHandler(f'log_{current_time}.log', encoding='utf-8')
+            file_handler = logging.FileHandler(filename(), encoding='utf-8')
             file_handler.setFormatter(MyFormatter())
             log.addHandler(file_handler)
 
@@ -82,7 +287,9 @@ class SerialSnooper:
         parity=serial.PARITY_EVEN,
         timeout=0,
         raw_log=False,
-        raw_only=False
+        raw_only=False,
+        csv_log=False,         # <-- NEW
+        daily_file=False       # <-- NEW: re-use the same daily-file logic
     ):
         self.port = port
         self.baud = baud
@@ -90,6 +297,18 @@ class SerialSnooper:
         self.parity = parity
         self.raw_log = raw_log
         self.raw_only = raw_only
+
+        # Our new CSV logger (if requested)
+        self.csv_logger = CSVLogger(
+            enable_csv=csv_log,
+            daily_file=daily_file,
+            output_dir=".",  # or "logs" if you prefer
+            base_filename="log"
+        ) if csv_log else None
+
+        # Dictionary to remember the last read request (start address, quantity)
+        # keyed by (slave_id, function_code)
+        self.pendingRequests = {}
 
         log.info(
             "Opening serial interface: \n"
@@ -126,6 +345,8 @@ class SerialSnooper:
 
     def close(self):
         self.connection.close()
+        if self.csv_logger:
+            self.csv_logger.close()
 
     def read_raw(self, n=1):
         return self.connection.read(n)
@@ -162,6 +383,7 @@ class SerialSnooper:
     def decodeModbus(self, data):
         modbusdata = data
         bufferIndex = 0
+        from datetime import datetime  # for timestamps
 
         while True:
             unitIdentifier = 0
@@ -316,6 +538,15 @@ class SerialSnooper:
                                 self.trashdataf += "]"
                                 log.info(self.trashdataf)
                             request = True
+
+                            # Store the readAddress and readQuantity for this (slave, funcCode).
+                            # We'll log to CSV once we get the response.
+                            self.pendingRequests[(unitIdentifier, functionCode)] = (
+                                readAddress,
+                                readQuantity,
+                                datetime.now().isoformat()  # store request time if you like
+                            )
+
                             responce = False
                             error = False
                             if functionCode == 3:
@@ -368,6 +599,33 @@ class SerialSnooper:
                                         unitIdentifier, functionCodeMessage, functionCode, readByteCount, 
                                         ", ".join([str(int.from_bytes(readData[i:i+2], byteorder='big')) for i in range(0, len(readData), 2)])
                                     ))
+
+                                    # ========== CSV LOGGING FOR DECODED VALUES ========== 
+                                    # Grab the request info if we have it
+                                    pending = self.pendingRequests.pop((unitIdentifier, functionCode), None)
+                                    if pending:
+                                        (startReg, quantity, req_time) = pending
+                                        # `readData` is a bytearray of length readByteCount
+                                        # Each register is 2 bytes
+                                        register_values = []
+                                        for i in range(0, len(readData), 2):
+                                            val = int.from_bytes(readData[i:i+2], byteorder='big')
+                                            register_values.append(val)
+
+                                        # We can choose to use the response time rather than the request time:
+                                        timestamp_str = datetime.now().isoformat()
+
+                                        # Log the data to CSV
+                                        if self.csv_logger:
+                                            self.csv_logger.log_data(
+                                                timestamp_str,
+                                                unitIdentifier,
+                                                "READ", 
+                                                startReg,
+                                                len(register_values),
+                                                register_values
+                                            )
+
                                     modbusdata = modbusdata[bufferIndex:]
                                     bufferIndex = 0
                             else:
@@ -480,6 +738,20 @@ class SerialSnooper:
                                 unitIdentifier, functionCode, writeAddress, 
                                 ", ".join([str(int.from_bytes(writeData[i:i+2], byteorder='big')) for i in range(0, len(writeData), 2)])
                             ))
+
+                            # ---- CSV Logging: single register => quantity=1
+                            if self.csv_logger:
+                                timestamp_str = datetime.now().isoformat()
+                                val = int.from_bytes(writeData, byteorder="big")
+                                self.csv_logger.log_data(
+                                    timestamp_str,
+                                    unitIdentifier,
+                                    "WRITE",
+                                    writeAddress,
+                                    1,         # single register
+                                    [val]      # list of length 1
+                                )
+
                             modbusdata = modbusdata[bufferIndex:]
                             bufferIndex = 0
                     else:
@@ -660,6 +932,26 @@ class SerialSnooper:
                                     unitIdentifier, functionCode, writeAddress, writeQuantity, 
                                     ", ".join([str(int.from_bytes(writeData[i:i+2], byteorder='big')) for i in range(0, len(writeData), 2)])
                                 ))
+
+                                # ---- CSV logging:
+                                # The user is writing 'writeQuantity' registers,
+                                # each register is 2 bytes in writeData.
+                                register_values = []
+                                for i in range(0, len(writeData), 2):
+                                    val = int.from_bytes(writeData[i:i+2], byteorder="big")
+                                    register_values.append(val)
+
+                                if self.csv_logger:
+                                    timestamp_str = datetime.now().isoformat()
+                                    self.csv_logger.log_data(
+                                        timestamp_str,
+                                        unitIdentifier,
+                                        "WRITE",
+                                        writeAddress,
+                                        writeQuantity,
+                                        register_values
+                                    )
+
                                 modbusdata = modbusdata[bufferIndex:]
                                 bufferIndex = 0
                         else:
@@ -991,6 +1283,7 @@ def printHelp(baud, parity, log_to_file, timeout, daily_file=False):
     print(f"  -R, --raw         in addition to -l, also raw messages are logged, default = False (Option)")
     print("  -X, --raw-only    log raw traffic only; skip modbus decode (Option)")
     print(f"  -D, --daily-file  rotate logs daily at midnight, default = {daily_file} (Option)")  # <-- NEW
+    print("  -C, --csv         log decoded register data to a CSV file (FC3 & FC4 responses) (Option)")  # <-- NEW
     print("  -h, --help        print the documentation")
     print("")
 
@@ -1027,12 +1320,13 @@ if __name__ == "__main__":
     raw_log = False
     raw_only = False
     daily_file = False  # <-- NEW
+    csv_log = False   # <-- NEW
 
     try:
         opts, args = getopt.getopt(
             sys.argv[1:],
-            "hp:b:r:t:lRXD",
-            ["help", "port=", "baudrate=", "parity=", "timeout=", "log-to-file", "raw", "raw-only", "daily-file"],
+            "hp:b:r:t:lRXDC",
+            ["help", "port=", "baudrate=", "parity=", "timeout=", "log-to-file", "raw", "raw-only", "daily-file", "csv"],
         )
     except getopt.GetoptError as e:
         printHelp(baud, parity, log_to_file, timeout, daily_file)
@@ -1069,6 +1363,12 @@ if __name__ == "__main__":
         elif opt in ("-D", "--daily-file"):
             daily_file = True
             log_to_file = True  # Typically you'd want a file if you're rotating daily
+        elif opt in ("-C", "--csv"):   # <-- NEW
+            csv_log = True
+            # Typically you'd also want a file if using CSV,
+            # but that's up to you. For safety, we can do:
+            daily_file = True
+            # This ensures we also rotate daily for the CSV
 
     log = configure_logging(log_to_file, daily_file)
 
@@ -1080,7 +1380,10 @@ if __name__ == "__main__":
     if timeout is None:
         timeout = calcTimeout(baud)
 
-    with SerialSnooper(port, baud, parity, timeout, raw_log=raw_log, raw_only=raw_only) as sniffer:
+    with SerialSnooper(port, baud, parity, timeout, raw_log=raw_log, raw_only=raw_only,
+                                csv_log=csv_log,         # <-- pass to our new param
+                                daily_file=daily_file    # <-- re-use same logic for daily rotation) as sniffer:
+    ) as sniffer:
         while True:
             data = sniffer.read_raw()
             sniffer.process_data(data)
