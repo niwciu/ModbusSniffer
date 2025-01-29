@@ -11,10 +11,6 @@ import csv
 import os
 from datetime import datetime
 
-import csv
-import os
-from datetime import datetime
-
 class CSVLogger:
     def __init__(self, enable_csv=False, daily_file=False, output_dir=".", base_filename="modbus_data"):
         """
