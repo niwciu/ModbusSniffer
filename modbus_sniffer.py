@@ -237,12 +237,6 @@ class MyFormatter(logging.Formatter):
             self._style._fmt = f"%(asctime)-15s \033[{color}m%(levelname)-8s %(threadName)-15s-%(module)-15s:%(lineno)-8s\033[0m: %(message)s"
         return super().format(record)
 
-def filename():
-    current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
-    file_name = f'log_{current_time}.log'
-
-    return file_name
-
 def configure_logging(log_to_file, daily_file=False):
     """
     Configure logging to console, plus optionally to a file.
@@ -257,10 +251,14 @@ def configure_logging(log_to_file, daily_file=False):
     log.addHandler(console_handler)
 
     if log_to_file:
+        # Always create a filename with current date & time
+        current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        filename = f'log_{current_time}.log'
+
         if daily_file:
             # Use a TimedRotatingFileHandler to rotate logs at midnight
             handler = TimedRotatingFileHandler(
-                filename(),  # base filename
+                filename,  # base filename
                 when='midnight',
                 interval=1,
                 backupCount=7,        # keep 7 days of logs, adjust as desired
@@ -270,7 +268,7 @@ def configure_logging(log_to_file, daily_file=False):
             log.addHandler(handler)
         else:
             # File handler with custom formatter, using current datetime for filename
-            file_handler = logging.FileHandler(filename(), encoding='utf-8')
+            file_handler = logging.FileHandler(filename, encoding='utf-8')
             file_handler.setFormatter(MyFormatter())
             log.addHandler(file_handler)
 
