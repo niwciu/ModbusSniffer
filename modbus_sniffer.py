@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """
 Python modbus sniffer implementation
 ---------------------------------------------------------------------------
@@ -7,10 +5,20 @@ Python modbus sniffer implementation
 The following is a modbus RTU sniffer program,
 made without the use of any modbus-specific library.
 """
+
 import csv
 import os
+import argparse
+import signal
+import sys
+import logging
+import serial
 from datetime import datetime
+from logging.handlers import TimedRotatingFileHandler
 
+# --------------------------------------------------------------------------- #
+# CSV Logger class
+# --------------------------------------------------------------------------- #
 class CSVLogger:
     def __init__(self, enable_csv=False, daily_file=False, output_dir=".", base_filename="modbus_data"):
         """
@@ -49,7 +57,7 @@ class CSVLogger:
 
     def _get_datetime_str(self):
         """Return YYYYMMDD_HHMMSS for filenames."""
-        return datetime.now().strftime("%Y%m%d_%H%M%S")
+        return datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
     def _open_csv_file(self):
         """Open (or reopen) the CSV file. Closes any previously open file."""
@@ -145,7 +153,6 @@ class CSVLogger:
             # For each old row, build a new row with the new columns
             for old_row in old_rows:
                 new_row = [""] * len(self.columns)
-                # We know the first N columns in old_header might match
                 for col_index, col_name in enumerate(old_header):
                     if col_index < len(old_row):
                         cell_value = old_row[col_index]
@@ -153,7 +160,6 @@ class CSVLogger:
                         cell_value = ""
 
                     if col_name in old_col_map:
-                        # find the new index in self.columns
                         if col_name in self.columns:
                             new_index = self.columns.index(col_name)
                             new_row[new_index] = cell_value
@@ -204,20 +210,8 @@ class CSVLogger:
             self.csv_file = None
 
 # --------------------------------------------------------------------------- #
-# import the various needed libraries
+# Custom logging formatter
 # --------------------------------------------------------------------------- #
-import signal
-import sys
-import getopt
-import logging
-import serial
-from datetime import datetime
-from logging.handlers import TimedRotatingFileHandler  # <-- NEW
-
-# --------------------------------------------------------------------------- #
-# configure the logging system
-# --------------------------------------------------------------------------- #
-
 class MyFormatter(logging.Formatter):
     def format(self, record):
         if record.levelno == logging.INFO:
@@ -233,6 +227,9 @@ class MyFormatter(logging.Formatter):
             self._style._fmt = f"%(asctime)-15s \033[{color}m%(levelname)-8s %(threadName)-15s-%(module)-15s:%(lineno)-8s\033[0m: %(message)s"
         return super().format(record)
 
+# --------------------------------------------------------------------------- #
+# Configure logging
+# --------------------------------------------------------------------------- #
 def configure_logging(log_to_file, daily_file=False):
     """
     Configure logging to console, plus optionally to a file.
@@ -254,24 +251,25 @@ def configure_logging(log_to_file, daily_file=False):
         if daily_file:
             # Use a TimedRotatingFileHandler to rotate logs at midnight
             handler = TimedRotatingFileHandler(
-                filename,  # base filename
+                filename,
                 when='midnight',
                 interval=1,
-                backupCount=7,        # keep 7 days of logs, adjust as desired
+                backupCount=7,
                 encoding='utf-8'
             )
             handler.setFormatter(MyFormatter())
             log.addHandler(handler)
         else:
-            # File handler with custom formatter, using current datetime for filename
             file_handler = logging.FileHandler(filename, encoding='utf-8')
             file_handler.setFormatter(MyFormatter())
             log.addHandler(file_handler)
 
     return log
 
+log = logging.getLogger(__name__)
+
 # --------------------------------------------------------------------------- #
-# declare the sniffer
+# Sniffer class
 # --------------------------------------------------------------------------- #
 class SerialSnooper:
     def __init__(
@@ -1256,127 +1254,135 @@ class SerialSnooper:
         metCRC16 = (crcHi * 0x0100) + crcLo
         return metCRC16
 
-
 # --------------------------------------------------------------------------- #
-# Print the usage help
-# --------------------------------------------------------------------------- #
-def printHelp(baud, parity, log_to_file, timeout, daily_file=False):
-    if timeout is None:
-        timeout = calcTimeout(baud)
-    print("\nUsage:")
-    print("  python modbus_sniffer.py [arguments]")
-    print("OR")
-    print("  .\\modbus_sniffer.exe [arguments]")
-    print("")
-    print("Arguments:")
-    print("  -p, --port        select the serial port (Required)")
-    print(f"  -b, --baudrate    set the communication baud rate, default = {baud} (Option)")
-    print(f"  -r, --parity      select parity, default = {parity} (Option)")
-    print(f"  -t, --timeout     override the calculated inter frame timeout, default = {timeout}s (Option)")
-    print(f"  -l, --log-to-file console log is written to file, default = {log_to_file} (Option)")
-    print(f"  -R, --raw         in addition to -l, also raw messages are logged, default = False (Option)")
-    print("  -X, --raw-only    log raw traffic only; skip modbus decode (Option)")
-    print(f"  -D, --daily-file  rotate logs daily at midnight, default = {daily_file} (Option)")  # <-- NEW
-    print("  -C, --csv         log decoded register data to a CSV file (FC3 & FC4 responses) (Option)")  # <-- NEW
-    print("  -h, --help        print the documentation")
-    print("")
-
-# --------------------------------------------------------------------------- #
-# Calculate the timeout with the baudrate
+# Calculate the default timeout with the baudrate
 # --------------------------------------------------------------------------- #
 def calcTimeout(baud):
     if baud < 19200:
-        timeout = 33 / baud  # changed the ratio from 3.5 to 3
+        # default formula
+        timeout = 33 / baud
     else:
         timeout = 0.001750
     return timeout
 
 # --------------------------------------------------------------------------- #
-# configure a clean exit
+# Clean exit on Ctrl+C
 # --------------------------------------------------------------------------- #
 def signal_handler(sig, frame):
     print('\nGoodbye\n')
     sys.exit(0)
 
+
 # --------------------------------------------------------------------------- #
-# main routine
+# Main
 # --------------------------------------------------------------------------- #
 if __name__ == "__main__":
-    print(" ")
-    # init the signal handler for a clean exit
+    # Initialize Ctrl+C handler
     signal.signal(signal.SIGINT, signal_handler)
 
-    port = None
-    baud = 9600
-    timeout = None
-    parity = serial.PARITY_EVEN
-    log_to_file = False
-    raw_log = False
-    raw_only = False
-    daily_file = False  # <-- NEW
-    csv_log = False   # <-- NEW
+    parser = argparse.ArgumentParser(
+        description="Modbus RTU sniffer that logs decoded frames and optionally raw data."
+    )
+    parser.add_argument(
+        "-p", "--port",
+        required=True,
+        help="Select the serial port (e.g. COM3, /dev/ttyUSB0)."
+    )
+    parser.add_argument(
+        "-b", "--baudrate",
+        type=int,
+        default=9600,
+        help="Set the communication baud rate (default: 9600)."
+    )
+    parser.add_argument(
+        "-r", "--parity",
+        default="even",
+        choices=["none", "even", "odd"],
+        help="Select parity: none, even, or odd (default: even)."
+    )
+    parser.add_argument(
+        "-t", "--timeout",
+        type=float,
+        default=None,
+        help="Inter-frame timeout in seconds. If not set, an automatic calculation is used."
+    )
+    parser.add_argument(
+        "-l", "--log-to-file",
+        action="store_true",
+        default=False,
+        help="Write console log to a file as well (default: False)."
+    )
+    parser.add_argument(
+        "-R", "--raw",
+        action="store_true",
+        default=False,
+        help="Also log raw messages in hex (implies --log-to-file)."
+    )
+    parser.add_argument(
+        "-X", "--raw-only",
+        action="store_true",
+        default=False,
+        help="Log only raw traffic in hex, skip decode (implies --log-to-file)."
+    )
+    parser.add_argument(
+        "-D", "--daily-file",
+        action="store_true",
+        default=False,
+        help="Rotate logs daily at midnight (default: False)."
+    )
+    parser.add_argument(
+        "-C", "--csv",
+        action="store_true",
+        default=False,
+        help="Log decoded register data to a CSV file (implies daily rotation)."
+    )
 
-    try:
-        opts, args = getopt.getopt(
-            sys.argv[1:],
-            "hp:b:r:t:lRXDC",
-            ["help", "port=", "baudrate=", "parity=", "timeout=", "log-to-file", "raw", "raw-only", "daily-file", "csv"],
-        )
-    except getopt.GetoptError as e:
-        printHelp(baud, parity, log_to_file, timeout, daily_file)
-        sys.exit(2)
+    args = parser.parse_args()
 
-    for opt, arg in opts:
-        if opt in ("-h", "--help"):
-            printHelp(baud, parity, log_to_file, timeout, daily_file)
-            sys.exit()
-        elif opt in ("-p", "--port"):
-            port = arg
-        elif opt in ("-b", "--baudrate"):
-            baud = int(arg)
-        elif opt in ("-t", "--timeout"):
-            timeout = float(arg)
-        elif opt in ("-r", "--parity"):
-            if "none" in arg.lower():
-                parity = serial.PARITY_NONE
-            elif "even" in arg.lower():
-                parity = serial.PARITY_EVEN
-            elif "odd" in arg.lower():
-                parity = serial.PARITY_ODD
-        elif opt in ("-l", "--log-to-file"):
-            log_to_file = True
-        elif opt in ("-R", "--raw"):
-            raw_log = True
-            log_to_file = True  # Implicitly enable log-to-file
-        elif opt in ("-X", "--raw-only"):
-            raw_only = True
-            # Implicitly enable raw_log so we can see raw hex
-            raw_log = True
-            # Also, might force log_to_file if desired:
-            log_to_file = True
-        elif opt in ("-D", "--daily-file"):
-            daily_file = True
-            log_to_file = True  # Typically you'd want a file if you're rotating daily
-        elif opt in ("-C", "--csv"):   # <-- NEW
-            csv_log = True
-            # Typically you'd also want a file if using CSV,
-            # but that's up to you. For safety, we can do:
-            daily_file = True
-            # This ensures we also rotate daily for the CSV
+    # Convert parity string to pySerial constant
+    if args.parity == "none":
+        parity = serial.PARITY_NONE
+    elif args.parity == "even":
+        parity = serial.PARITY_EVEN
+    else:
+        parity = serial.PARITY_ODD
 
+    # Map command-line flags to local variables
+    port = args.port
+    baud = args.baudrate
+    log_to_file = args.log_to_file
+    raw_log = args.raw
+    raw_only = args.raw_only
+    daily_file = args.daily_file
+    csv_log = args.csv
+
+    # If user chooses raw or raw-only, imply log-to-file
+    if raw_log or raw_only:
+        log_to_file = True
+
+    # If user chooses CSV, also force daily_file = True (so new CSV each day)
+    if csv_log:
+        daily_file = True
+
+    # Compute default timeout if not given
+    if args.timeout is None:
+        timeout = calcTimeout(baud)
+    else:
+        timeout = args.timeout
+
+    # Configure logging
     log = configure_logging(log_to_file, daily_file)
 
-    if port is None:
-        print("Serial Port not defined, please use:")
-        printHelp(baud, parity, log_to_file, timeout, daily_file)
-        sys.exit(2)
-
-    if timeout is None:
-        timeout = calcTimeout(baud)
-
-    with SerialSnooper(port, baud, parity, timeout, raw_log=raw_log, raw_only=raw_only,
-                                csv_log=csv_log,         # <-- pass to our new param
-                                daily_file=daily_file    # <-- re-use same logic for daily rotation) as sniffer:
+    # Start the sniffer
+    with SerialSnooper(
+        port=port,
+        baud=baud,
+        parity=parity,
+        timeout=timeout,
+        raw_log=raw_log,
+        raw_only=raw_only,
+        csv_log=csv_log,
+        daily_file=daily_file
     ) as sniffer:
         while True:
             data = sniffer.read_raw()
