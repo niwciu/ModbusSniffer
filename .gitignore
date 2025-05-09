@@ -3,3 +3,4 @@ dist/
 log*
 *.spec
 __pycache__
+.venv
