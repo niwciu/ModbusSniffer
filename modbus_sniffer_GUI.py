@@ -4,7 +4,6 @@ import sys
 from module.serial_snooper import SerialSnooper
 from module.sniffer_utils import normalize_sniffer_config, calcTimeout
 from module.main_logger import configure_logging
-import serial
 
 class AutoResizeTable(QTableWidget):
     def __init__(self):
