@@ -9,12 +9,10 @@ Useful for sniffing packets between two devices to ensure correct operation.
 
 This fork bring lot of improvements from backend as welll as new GUI with some features.
 
+![Demo](./doc/dui.gif)
 
 
-
-
-
---------------------
+---
 
 
 # ❓ Why This Fork?
