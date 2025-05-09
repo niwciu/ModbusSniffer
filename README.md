@@ -9,7 +9,13 @@ Useful for sniffing packets between two devices to ensure correct operation.
 
 This fork bring lot of improvements from backend as welll as new GUI with some features.
 
-![Demo](./doc/dui.gif)
+<div align="center">
+
+
+![Demo](https://github.com/niwciu/ModbusSniffer/blob/main/doc/gui.gif?raw=true)
+
+</div>
+
 
 
 ---
@@ -135,3 +141,12 @@ Fork maintained by **niwciu** with enhancements described above.
 ---
 
 ❤️ Thank you for using this version of ModbusSniffer!
+
+</br></br>
+<div align="center">
+
+***
+
+![myEmbeddedWayBanerWhiteSmaller](https://github.com/user-attachments/assets/f4825882-e285-4e02-a75c-68fc86ff5716)
+***
+</div>
