@@ -109,10 +109,29 @@ class ModbusParser:
         return [int.from_bytes(data[i:i+2], byteorder='big') for i in range(0, len(data), 2)]
 
     def _common_frame(self, **kwargs):
-        return {
-            "timestamp": datetime.now().isoformat(),
-            **kwargs
+        default_frame = {
+            "timestamp": datetime.now().isoformat(),   # Current timestamp when the frame was created
+            "slave_id": '',                            # Modbus slave ID (unit identifier)
+            "function": '',                            # Function code of the Modbus operation
+            "function_name": '',                       # Human-readable name of the function
+            "data_address": '',                        # Starting address for the operation (read/write)
+            "data_qty": '',                            # Quantity of items (coils/registers) to be read or written
+            "byte_cnt": '',                            # Number of data bytes in response/request
+            "data": [],                                # Actual data values (as list of bytes or words)
+            "direction": '',                           # 'master' or 'slave' - who sent the message
+            "message_type": '',                        # 'request' or 'response'
+            
+            # Optional fields for extended operations like FC23 (Read/Write Multiple Registers)
+            "read_address": '',                        # Starting address for the read portion (FC 23)
+            "read_quantity": '',                       # Quantity of registers to read (FC 23)
+            "write_address": '',                       # Starting address for the write portion (FC 23)
+            "write_quantity": '',                      # Quantity of registers to write (FC 23)
+
+            # Optional field for exception responses
+            "exception_code": ''                       # Exception code if an error response is returned
         }
+        default_frame.update(kwargs)
+        return default_frame
 
     # ---------- Handler Implementations ----------
     def _handle_read_bits(self, buffer, start, sid, fc):
@@ -130,15 +149,15 @@ class ModbusParser:
         self._log_data(f"Master\t-> ID: {sid}, FC: 0x{fc:02x}, Read address: {read_address}, Read Quantity: {read_qty}")
         fname = "Read Coils" if fc == 1 else "Read Discrete Inputs"
         return self._common_frame(
-            direction="master", 
-            message_type="request", 
+            # MODBUS Application Protocol Specification V1.1b value set
             slave_id=sid, 
             function=fc,
-            function_name= fname,
             data_address=read_address, 
             data_qty=read_qty,
-            byte_cnt='',
-            data=[]
+            # Additional parser data for table view gnerator
+            direction="master", 
+            message_type="request", 
+            function_name= fname,
         )
 
     def _handle_read_registers(self, buffer, start, sid, fc):
@@ -157,15 +176,15 @@ class ModbusParser:
         fname = "Read Holding Registers" if fc == 3 else "Read Input Registers"
         self._log_data(f"Master\t-> ID: {sid}, FC: 0x{fc:02x}, Read address: {read_address}, Read Quantity: {read_qty}")
         return self._common_frame(
-            direction="master",
-            message_type="request",  
+            # MODBUS Application Protocol Specification V1.1b value set
             slave_id=sid, 
             function=fc,
-            function_name=fname,
             data_address=read_address, 
             data_qty=read_qty,
-            byte_cnt = '',
-            data=[]
+            # Additional parser data for table view gnerator
+            direction="master",
+            message_type="request", 
+            function_name=fname,
         )
 
     def _handle_write_single(self, buffer, start, sid, fc):
@@ -183,14 +202,16 @@ class ModbusParser:
         self._log_data(f"Master\t-> ID: {sid}, FC: 0x{fc:02x}, Write addr: {addr}, Data: {int.from_bytes(data, 'big')}")
         fname = "Write Single Coil" if fc == 5 else "Write Single Register"
         frame = self._common_frame(
-            direction="master",
-            message_type="request", 
+            # MODBUS Application Protocol Specification V1.1b value set
             slave_id=sid, 
             function=fc,
-            function_name=fname, 
             data_address=addr,
             data=list(data),
-            byte_cnt = '', 
+            # Additional parser data for table view gnerator
+            direction="master",
+            message_type="request", 
+            function_name=fname, 
+            
         )
         if fc == 6:
             self._log_csv(frame['timestamp'], sid, "WRITE", addr, 1, [int.from_bytes(data, 'big')])
@@ -218,15 +239,17 @@ class ModbusParser:
         if fc == 16:
             self._log_csv(datetime.now().isoformat(), sid, "WRITE", addr, qty, values)
         return self._common_frame(
-            direction="master",
-            message_type="request", 
+            # MODBUS Application Protocol Specification V1.1b value set
             slave_id=sid, 
             function=fc,
-            function_name=fname, 
             data_address=addr,
             data_qty=qty, 
             byte_cnt = byte_count,
-            data=values, 
+            data=values,
+            # Additional parser data for table view gnerator
+            direction="master",
+            message_type="request", 
+            function_name=fname,    
         )
 
     def _handle_read_write(self, buffer, start, sid, fc):
@@ -253,17 +276,19 @@ class ModbusParser:
         self._log_data(f"Master\t-> ID: {sid}, FC: 0x{fc:02x}, ReadAddr: {read_address}, ReadQty: {read_qty}, "
                        f"WriteAddr: {write_address}, WriteQty: {write_qty}")
         return self._common_frame(
-            direction="master", 
-            message_type="request",
+            # MODBUS Application Protocol Specification V1.1b value set
             slave_id=sid, 
             function=fc,
-            function_name="Read/Write Multiple Registers",
-            read_address=read_address, 
+            read_address=read_address,
             read_quantity=read_qty,
-            write_address=write_address, 
+            write_address=write_address,
             write_quantity=write_qty,
+            byte_count=2*write_qty,
             data=values, 
-            byte_cnt= ''
+            # Additional parser data for table view gnerator
+            direction="master", 
+            message_type="request",
+            function_name="Read/Write Multiple Registers",
         )
 
 
@@ -278,13 +303,15 @@ class ModbusParser:
         self._log_raw(buffer, start, self.bufferIndex)
         self._log_data(f"Slave\t-> ID: {sid}, Exception FC: 0x{fc:02x}, Code: {exception_code}")
         return self._common_frame(
+            # MODBUS Application Protocol Specification V1.1b value set
+            slave_id=sid, 
+            function=fc, # this is function code with error mask
+            exception_code=exception_code,
+            # Additional parser data for table view gnerator
             direction="slave", 
             message_type="response",
-            slave_id=sid, 
-            function=fc,
             function_name="Exception", 
-            exception_code=exception_code,
-            byte_cnt= ''
+            
         )
 
     def _handle_read_bits_response(self, buffer, start, sid, fc):
@@ -301,17 +328,18 @@ class ModbusParser:
         self.bufferIndex += 2
         self._log_raw(buffer, start, self.bufferIndex)
         values = list(data)
+        fname = "Read Coils" if fc == 1 else "Read Discrete Inputs"
         self._log_data(f"Slave\t-> ID: {sid}, FC: 0x{fc:02x}, Read byte count: {byte_count}, Data: {values}")
         return self._common_frame(
-            direction="slave", 
-            message_type="response", 
+            # MODBUS Application Protocol Specification V1.1b value set
             slave_id=sid, 
             function=fc,
-            data_qty='',
-            byte_cnt = byte_count, 
+            byte_cnt = byte_count,
             data=values,
-            function_name="Read Coils" if fc == 1 else "Read Discrete Inputs",   
-            data_address=''
+            # Additional parser data for table view gnerator
+            direction="slave", 
+            message_type="response", 
+            function_name=fname,   
         )
 
     def _handle_read_registers_response(self, buffer, start, sid, fc):
@@ -328,22 +356,23 @@ class ModbusParser:
         self.bufferIndex += 2
         self._log_raw(buffer, start, self.bufferIndex)
         values = self._parse_data_words(data)
+        fname = "Read Holding Registers" if fc == 3 else "Read Input Registers"
         self._log_data(f"Slave\t-> ID: {sid}, FC: 0x{fc:02x}, Byte count: {byte_count}, Data: {values}")
         request_info = self.pendingRequests.pop((sid, fc), None)
         if request_info:
             addr, qty, _ = request_info
             self._log_csv(datetime.now().isoformat(), sid, "READ", addr, len(values), values)
         return self._common_frame(
-            direction="slave",
-            message_type="response",  
+            # MODBUS Application Protocol Specification V1.1b value set
             slave_id=sid, 
             function=fc,
-            function_name="Read Holding Registers" if fc == 3 else "Read Input Registers",
-            data_qty=byte_count//2, 
             byte_cnt = byte_count,
             data=values,
-            data_address=''
-
+            # Additional parser data for table view gnerator
+            direction="slave",
+            message_type="response",  
+            function_name=fname,
+            # data_qty=byte_count//2, 
         )
 
     def _handle_write_single_response(self, buffer, start, sid, fc):
@@ -357,16 +386,18 @@ class ModbusParser:
             return None
         self.bufferIndex += 2
         self._log_raw(buffer, start, self.bufferIndex)
+        fname = "Write Single Coil" if fc == 5 else "Write Single Register"
         self._log_data(f"Slave\t-> ID: {sid}, FC: 0x{fc:02x}, Echo addr: {addr}, Data: {int.from_bytes(data, 'big')}")
         return self._common_frame(
-            direction="slave", 
-            message_type="response",
+            # MODBUS Application Protocol Specification V1.1b value set
             slave_id=sid, 
             function=fc,
-            function_name="Write Single Coil" if fc == 5 else "Write Single Register",
-            data_address=addr, 
+            data_address=addr,
             data=list(data),
-            byte_cnt = ''
+            # Additional parser data for table view gnerator
+            direction="slave", 
+            message_type="response",
+            function_name= fname,
         )
 
     def _handle_write_multiple_response(self, buffer, start, sid, fc):
@@ -383,16 +414,16 @@ class ModbusParser:
         fname = "Write Multiple Coils" if fc == 15 else "Write Multiple Registers"
         self._log_data(f"Slave\t-> ID: {sid}, FC: 0x{fc:02x}, Echo addr: {addr}, Qty: {qty}")
         return self._common_frame(
-            direction="slave", 
-            message_type="response", 
+            # MODBUS Application Protocol Specification V1.1b value set 
             slave_id=sid, 
             function=fc,
-            function_name=fname, 
             data_address=addr,
             data_qty=qty,
-            byte_cnt = qty*2,
-            data=[]
-
+            # Additional parser data for table view gnerator
+            direction="slave", 
+            message_type="response",
+            function_name=fname,     
+            # byte_cnt = qty*2,
         )
     def _handle_read_write_response(self, buffer, start, sid, fc):
         if len(buffer) < start + 5:
@@ -408,15 +439,15 @@ class ModbusParser:
         values = self._parse_data_words(data)
         self._log_data(f"Slave\t-> ID: {sid}, FC: 0x{fc:02x}, Read byte count: {byte_count}, Data: {values}")
         return self._common_frame(
-            direction="slave",
-            message_type="response", 
+            # MODBUS Application Protocol Specification V1.1b value set
             slave_id=sid, 
             function=fc,
+            byte_cnt=byte_count,  
+            data=values,
+            # Additional parser data for table view gnerator
+            direction="slave",
+            message_type="response", 
             function_name="Read/Write Multiple Registers",
-            read_byte_count=byte_count, 
-            read_data=values,
-            byte_cnt = '',
-            
         )
 
 

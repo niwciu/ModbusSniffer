@@ -300,11 +300,75 @@ class GUIApp(QWidget):
             for frame in data:
                 self.add_parsed_data(frame)
         else:
-            self.log_window.append(f"[WARN] Nieoczekiwany typ danych: {type(data)} - {data}")
+            self.log_window.append(f"[WARN] Unexpected data type: {type(data)} - {data}")
+
+    def format_table_fields(self, value):
+        """
+        Formats the address and quantity fields depending on function code and message type.
+        Returns (formatted_address, formatted_quantity)
+        """
+        function = value.get("function")
+        message_type = value.get("message_type")
+
+        if function == 23 and message_type == "request":
+            try:
+                read_addr = int(value["read_address"])
+                write_addr = int(value["write_address"])
+                read_qty = int(value["read_quantity"])
+                write_qty = int(value["write_quantity"])
+                formatted_address = f"R: 0x{read_addr:04X} W: 0x{write_addr:04X}"
+                formatted_quantity = f"R: {read_qty} W: {write_qty}"
+            except (ValueError, TypeError):
+                formatted_address = f"R: {value['read_address']} W: {value['write_address']}"
+                formatted_quantity = f"R: {value['read_quantity']} W: {value['write_quantity']}"
+        else:
+            # Fallback for other function codes
+            data_address = value.get("data_address")
+            if data_address is not None and str(data_address).strip():
+                try:
+                    formatted_address = f"0x{int(data_address):04X}"
+                except (ValueError, TypeError):
+                    formatted_address = str(data_address)
+            else:
+                formatted_address = ""
+
+            formatted_quantity = str(value.get("data_qty", ""))
+
+        return formatted_address, formatted_quantity
+    
+    def format_data_field(self, value):
+        """
+        Returns formatted string for the 'data' column (col 8), depending on message type.
+        """
+    def format_data_field(self, value):
+        """
+        Formats data column (col 8). If 'exception', shows exception code. 
+        Otherwise formats as list of uint16_t words in hex (big-endian).
+        """
+        if value.get("function_name") == "exception":
+            exception_code = value.get("exception_code")
+            if exception_code is not None:
+                try:
+                    return f"Exception Code: 0x{int(exception_code):02X}"
+                except (ValueError, TypeError):
+                    return f"Exception Code: {exception_code}"
+            else:
+                return "Exception Code: Unknown"
+        else:
+            data = value.get("data", [])
+            # Group bytes into 16-bit words (big-endian)
+            words = []
+            for i in range(0, len(data) - 1, 2):
+                word = (data[i] << 8) | data[i + 1]  # MSB first
+                words.append(f"0x{word:04X}")
+            # Optional: handle odd-length data
+            if len(data) % 2 != 0:
+                words.append(f"0x{data[-1]:02X}")  # Last byte as-is
+            return ", ".join(words)
+
 
     def add_parsed_data(self, frame):
-        """Dodanie danych do tabeli (request/response merge)"""
-        key = (frame['slave_id'], frame['function'], frame['data_qty'],frame ['message_type'])
+        key = (frame['slave_id'], frame['function'], frame['data_qty'],frame['data_address'],frame ['message_type'], frame ['exception_code'])
         timestamp = frame.get('timestamp', '')
         message_type = frame.get('message_type', '')
         data = frame.get('data', [])
@@ -324,13 +388,18 @@ class GUIApp(QWidget):
                 "data_qty": frame['data_qty'],
                 "byte_count": frame['byte_cnt'],
                 "data": data,
-                "occurrences": 1
+                "occurrences": 1,
+                "exception_code":frame ['exception_code'],
+                #FC 23 additional fields
+                "read_address": frame['read_address'],
+                "read_quantity": frame['read_quantity'],
+                "write_address": frame['write_address'],
+                "write_quantity": frame['write_quantity'],
             }
 
         self.update_parsed_data_table()
 
     def update_parsed_data_table(self):
-        """Zaktualizowanie tabeli na podstawie słownika danych"""
         self.table.setRowCount(0)  
         for key, value in self.data_dict.items():
             row_position = self.table.rowCount()
@@ -344,16 +413,19 @@ class GUIApp(QWidget):
                 except (ValueError, TypeError):
                     hex_address = str(data_address)
 
+            formatted_address, formatted_quantity = self.format_table_fields(value)
+            formatted_data = self.format_data_field(value)
+
             # Adding data to table view
             self.table.setItem(row_position, 0, QTableWidgetItem(value["timestamp"].replace("T", " ")))
             self.table.setItem(row_position, 3, QTableWidgetItem(value["message_type"]))
             self.table.setItem(row_position, 4, QTableWidgetItem(str(value["slave_id"])))
             self.table.setItem(row_position, 1, QTableWidgetItem(f"0x{value['function']:02X}"))
             self.table.setItem(row_position, 2, QTableWidgetItem(value["function_name"]))
-            self.table.setItem(row_position, 5, QTableWidgetItem(hex_address))  
-            self.table.setItem(row_position, 6, QTableWidgetItem(str(value["data_qty"])))
+            self.table.setItem(row_position, 5, QTableWidgetItem(formatted_address))
+            self.table.setItem(row_position, 6, QTableWidgetItem(formatted_quantity))
             self.table.setItem(row_position, 7, QTableWidgetItem(str(value["byte_count"])))
-            self.table.setItem(row_position, 8, QTableWidgetItem(", ".join(f"0x{byte:02X}" for byte in value["data"])))
+            self.table.setItem(row_position, 8, QTableWidgetItem(formatted_data))
             self.table.setItem(row_position, 9, QTableWidgetItem(str(value["occurrences"])))
             
         self.table.resizeColumnsToContents()
