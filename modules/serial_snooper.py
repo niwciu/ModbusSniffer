@@ -10,7 +10,7 @@ class SerialSnooper:
         port,
         baud=9600,
         parity="none",
-        timeout=0,
+        timeout=100,
         raw_log=False,
         raw_only=False,
         csv_log=False,         
@@ -41,7 +41,7 @@ class SerialSnooper:
             + "\tbytesize: 8\n"
             + f"\tparity: {parity}\n"
             + "\tstopbits: 1\n"
-            + f"\ttimeout: {timeout}\n"
+            + f"\ttimeout: {timeout}s\n"
         )
         self.connection = serial.Serial(
             port=port,
@@ -49,7 +49,7 @@ class SerialSnooper:
             bytesize=serial.EIGHTBITS,
             parity=parity,
             stopbits=serial.STOPBITS_ONE,
-            timeout=timeout,
+            timeout=timeout, 
         )
         self.log.debug(self.connection)
 
