@@ -1,5 +1,3 @@
-# sniffer_utils.py
-
 import serial
 
 # --------------------------------------------------------------------------- #
@@ -7,7 +5,6 @@ import serial
 # --------------------------------------------------------------------------- #
 def calcTimeout(baud):
     if baud < 19200:
-        # default formula
         timeout = 33 / baud
     else:
         timeout = 0.001750
@@ -23,8 +20,8 @@ def normalize_sniffer_config(
     raw_only=False,
     daily_file=False,
     csv=False,
+    GUI = False,
 ):
-    # Zamiana parity string -> pySerial
     if parity_str == "none":
         parity = serial.PARITY_NONE
     elif parity_str == "even":
@@ -32,11 +29,11 @@ def normalize_sniffer_config(
     else:
         parity = serial.PARITY_ODD
 
-    # Oblicz timeout
     timeout = calcTimeout(baudrate) if timeout_input is None else float(timeout_input)
 
-    # if raw or raw_only:
-    #     log_to_file = True
+    if (raw or raw_only) and ( not GUI):
+        log_to_file = True
+
     if csv:
         daily_file = True
 

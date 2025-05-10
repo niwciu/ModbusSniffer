@@ -84,7 +84,7 @@ deactivate
 ### Detail information aout usage of CLI version
 
 ```bash
-python main.py -h
+python3 modbus_sniffer.py -h
 ```
 ### Example of usage
 
@@ -110,6 +110,15 @@ python modbus_sniffer_GUI.py
 6. 🌈 **Enhanced Live Logging:** Color distinction for request/response pairs; unmatched requests marked in red
 
 ---
+# 🔧 ToDo
+
+- Test of new parser with all integrated functions - pending
+- Integrate CSV logging with new modbus parser
+- Improve GUI with:
+    - Clear button for logs and table view
+    - Add frame filters
+    - Add comoboxe for selecting pors from ports availabel in the system
+    - Add comoboxe for selecting predefined baudrate
 
 # 📚 Documentation & Support
 

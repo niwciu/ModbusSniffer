@@ -37,24 +37,20 @@ def configure_logging(log_to_file=True, daily_file=False, gui_callback=None):
     log = logging.getLogger("global_logger")
     log.setLevel(logging.INFO)
 
-    # 🧹 Clear previous handlers to prevent duplicates
     if log.hasHandlers():
         log.handlers.clear()
 
     formatter = MyFormatter()
 
-    # Console output
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
     log.addHandler(console_handler)
 
-    # GUI handler
     if gui_callback:
         gui_handler = GuiLogHandler(gui_callback)
         gui_handler.setFormatter(formatter)
         log.addHandler(gui_handler)
 
-    # File logging
     if log_to_file:
         current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         filename = f'log_{current_time}.log'

@@ -8,9 +8,9 @@ made without the use of any modbus-specific library.
 import argparse
 import signal
 import sys
-from module.sniffer_utils import normalize_sniffer_config
-from module.serial_snooper import SerialSnooper
-from module.main_logger import configure_logging
+from modules.sniffer_utils import normalize_sniffer_config
+from modules.serial_snooper import SerialSnooper
+from modules.main_logger import configure_logging
 
    
 
@@ -65,13 +65,13 @@ if __name__ == "__main__":
         "-R", "--raw",
         action="store_true",
         default=False,
-        help="Also log raw messages in hex (implies --log-to-file)."
+        help="Additional loging of raw messages in hex.(implies --log-to-file for CLI app)"
     )
     parser.add_argument(
         "-X", "--raw-only",
         action="store_true",
         default=False,
-        help="Log only raw traffic in hex, skip decode (implies --log-to-file)."
+        help="Log only raw traffic in hex, skip decode (implies --log-to-file for CLI app)."
     )
     parser.add_argument(
         "-D", "--daily-file",
@@ -83,7 +83,7 @@ if __name__ == "__main__":
         "-C", "--csv",
         action="store_true",
         default=False,
-        help="Log decoded register data to a CSV file (implies daily rotation)."
+        help="Log decoded register data to a CSV file (implies daily rotation). !!!! Currently available only when using old parser module (import modbus_parser instead of modbus_parser_new in serial_snooper.py module ) !!!"
     )
 
     args = parser.parse_args()

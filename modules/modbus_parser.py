@@ -1,7 +1,8 @@
 # --------------------------------------------------------------------------- #
 # This file contain parisng code extracted from origin forked version to a class
-# keep in project to have option for testing against new builded parser in 
-#   mudbus_parser_new.py
+# keep in project to have:
+#       - option for testing against new builded parser in mudbus_parser_new.py
+#       - have option to run project (specially CLI with 100% backword comatibility)
 # --------------------------------------------------------------------------- #
 
 from datetime import datetime  # for timestamps
@@ -14,11 +15,8 @@ class ModbusParser:
         self.log = main_logger
         self.on_parsed = on_parsed
 
-        # Dictionary to remember the last read request (start address, quantity)
-        # keyed by (slave_id, function_code)
         self.pendingRequests = {}
 
-        # Inicjalizuj inne właściwości klasy
     # --------------------------------------------------------------------------- #
     # Debuffer and decode the modbus frames (Request, Response, Exception)
     # --------------------------------------------------------------------------- #

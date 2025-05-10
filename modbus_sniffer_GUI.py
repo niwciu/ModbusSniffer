@@ -1,9 +1,9 @@
-from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
+from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QComboBox, QCheckBox, QGroupBox, QPushButton, QTextEdit, QTabWidget, QTableWidget, QTableWidgetItem, QStyledItemDelegate, QHeaderView
 import sys
-from module.serial_snooper import SerialSnooper
-from module.sniffer_utils import normalize_sniffer_config, calcTimeout
-from module.main_logger import configure_logging
+from modules.serial_snooper import SerialSnooper
+from modules.sniffer_utils import normalize_sniffer_config
+from modules.main_logger import configure_logging
 
 class AutoResizeTable(QTableWidget):
     def __init__(self):
@@ -14,16 +14,17 @@ class AutoResizeTable(QTableWidget):
         self.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
         self.verticalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
         
-        # Wywołaj resize po dodaniu danych
+        # Resize the column after addind data to table
         self.model().dataChanged.connect(self.resize_columns)
         
     def resize_columns(self):
         self.resizeColumnsToContents()
         self.resizeRowsToContents()
+        
 class AdvancedAlignDelegate(QStyledItemDelegate):
     def __init__(self):
         super().__init__()
-        self.column_alignments = {}  # Przechowuje reguły dla kolumn {indeks: (poziome, pionowe)}
+        self.column_alignments = {}
 
     def set_column_alignment(self, col, horizontal, vertical=Qt.AlignmentFlag.AlignVCenter):
         self.column_alignments[col] = (horizontal, vertical)
@@ -33,10 +34,9 @@ class AdvancedAlignDelegate(QStyledItemDelegate):
         
         if index.column() in self.column_alignments:
             h_align, v_align = self.column_alignments[index.column()]
-            option.displayAlignment = h_align | v_align  # Łączenie flag
+            option.displayAlignment = h_align | v_align 
 
 
-# Klasa do pracy z wątkami - odpowiada za sniffera
 class SnifferWorker(QThread):
     log_signal = pyqtSignal(str)
     parsed_data_signal = pyqtSignal(dict)
@@ -82,17 +82,11 @@ class SnifferWorker(QThread):
         except Exception as e:
             self.log.error(f"Exception in sniffer: {str(e)}")
 
-
-
-
     def stop(self):
         self.running = False
         self.quit()
         self.wait()
 
-
-
-# Główna aplikacja GUI
 class GUIApp(QWidget):
     def __init__(self):
         super().__init__()
@@ -162,7 +156,7 @@ class GUIApp(QWidget):
         self.button_layout.addWidget(self.stop_btn)
         self.layout.addLayout(self.button_layout)
 
-        # Zakładki
+        # Tabs def
         self.tabs = QTabWidget()
         self.tab1 = QWidget()
         self.tab2 = QWidget()
@@ -170,30 +164,29 @@ class GUIApp(QWidget):
         self.tabs.addTab(self.tab1, "Logs")
         self.tabs.addTab(self.tab2, "Parsed Data")
 
-        # Zakładka 1: Logi
+        # Tab 1 - logs
         self.log_window = QTextEdit()
         self.log_window.setReadOnly(True)
         self.tab1_layout = QVBoxLayout()
         self.tab1_layout.addWidget(self.log_window)
         self.tab1.setLayout(self.tab1_layout)
 
-        # Zakładka 2: Tabela z danymi
+        # Tab 2: Parsed mesega data table
         self.table = QTableWidget()
         self.table.setColumnCount(10)
         self.table.setHorizontalHeaderLabels([
             "Timestamp", "Fn Code","Function name","Msg Type", "Slave ID", "Data Address", "Data Qty", "Byte Count", "Data", "Occurrences"
         ])
-        # Wyśrodkowanie przez delegata
+        
         delegate = AdvancedAlignDelegate()
-
-        # Kolumna 0: do lewej + pionowo na środku (domyślne)
+        # columns alignment set section
         delegate.set_column_alignment(0, Qt.AlignmentFlag.AlignLeft) 
         delegate.set_column_alignment(2, Qt.AlignmentFlag.AlignLeft) 
         delegate.set_column_alignment(3, Qt.AlignmentFlag.AlignLeft)
         delegate.set_column_alignment(8, Qt.AlignmentFlag.AlignLeft) 
-        # Kolumna 1: do prawej + pionowo na środku
-        # delegate.set_column_alignment(3, Qt.AlignmentFlag.AlignRight, Qt.AlignmentFlag.AlignVCenter)
-        # Kolumna 2: wyśrodkowane w obu kierunkach
+        
+        # delegate.set_column_alignment(X, Qt.AlignmentFlag.AlignRight, Qt.AlignmentFlag.AlignVCenter)
+        
         delegate.set_column_alignment(4, Qt.AlignmentFlag.AlignHCenter, Qt.AlignmentFlag.AlignVCenter)
         delegate.set_column_alignment(1, Qt.AlignmentFlag.AlignHCenter, Qt.AlignmentFlag.AlignVCenter)
         delegate.set_column_alignment(5, Qt.AlignmentFlag.AlignHCenter, Qt.AlignmentFlag.AlignVCenter)
@@ -202,17 +195,16 @@ class GUIApp(QWidget):
         delegate.set_column_alignment(9, Qt.AlignmentFlag.AlignHCenter, Qt.AlignmentFlag.AlignVCenter)
         self.table.setItemDelegate(delegate)
                              
-        # Wyśrodkowanie tekstu w nagłówkach
+        # Header Alignment
         header = self.table.horizontalHeader()
         header.setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # Ustaw auto-resize
+        # Set specific column autoresize to content 
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)  
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)       
         header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)    
         header.setSectionResizeMode(9, QHeaderView.ResizeMode.ResizeToContents)        
-        # Autodopasowanie szerokości kolumn do zawartości
         self.table.resizeColumnsToContents()
 
         self.tab2_layout = QVBoxLayout()
@@ -223,14 +215,13 @@ class GUIApp(QWidget):
         self.setLayout(self.layout)
 
         self.sniffer_thread = None
-        self.data_dict = {}  # Słownik do przechowywania sparsowanych danych
+        self.data_dict = {}  
 
-        # Zdarzenia
+        # Events
         self.start_btn.clicked.connect(self.start_sniffer)
         self.stop_btn.clicked.connect(self.stop_sniffer)
 
     def start_sniffer(self):
-        # Uruchomienie sniffera
         port = self.port_input.text()
         baudrate = int(self.baud_input.text())
         parity_str = self.parity_input.currentText()
@@ -253,7 +244,8 @@ class GUIApp(QWidget):
             raw=raw,
             raw_only=raw_only,
             daily_file=daily_file,
-            csv=csv
+            csv=csv,
+            GUI = True
         )
 
         self.log_window.append(f"<span style='color:yellow'>[INFO] Starting sniffer on {config['port']}, {config['baudrate']}, {parity_str}, Timeout: {config['timeout']}</span>")
@@ -267,7 +259,6 @@ class GUIApp(QWidget):
         self.stop_btn.setEnabled(True)
 
     def stop_sniffer(self):
-        # Zatrzymanie sniffera
         if self.sniffer_thread:
             self.sniffer_thread.stop()
         self.start_btn.setEnabled(True)
@@ -276,14 +267,11 @@ class GUIApp(QWidget):
 
     def update_log_window(self, log_entry):
         """
-        Aktualizacja logów w oknie.
-        Dodaje kolorowanie na podstawie par Master/Slave.
+        Update logs in log wiev window.
+        Add coloring of the logs 
         """
-
-        # Sprawdzamy, czy to jest log dla Master
         if "Master" in log_entry:
-            # Master ma odpowiedź, więc kolorujemy go na zielono
-            if self.last_master == "no response":  # Jeśli poprzedni Master nie miał odpowiedzi
+            if self.last_master == "no response":  
                 log_entry = f"<span style='color:{self.pastel_red}'>{log_entry}</span>"
             else:
                 if self.last_ok_color == "blue":
@@ -293,24 +281,19 @@ class GUIApp(QWidget):
                     log_entry = f"<span style='color:{self.pastel_blue}'>{log_entry}</span>"
                     self.last_ok_color = "blue"
                 self.last_master = "no response"
-
-        # Sprawdzamy, czy to jest log dla Slave
         elif "Slave" in log_entry:
-            self.last_master = "answered"  # Zapamiętujemy, że ten Master miał odpowiedź
+            self.last_master = "answered"  
             if self.last_ok_color == "blue":
                 log_entry = f"<span style='color:{self.pastel_blue}'>{log_entry}</span>"
             else:
                 log_entry = f"<span style='color:{self.pastel_green}'>{log_entry}</span>"
-
-            # Dodajemy pustą linię po logu Slave
+            # add separation after slave log
             log_entry += "<br>"
 
-        # Wstawiamy log do GUI
+        # Add log to gui log wiev tab
         self.log_window.append(log_entry)
 
-
     def update_parsed_data(self, data):
-        # Obsługa sytuacji, gdy przesłany jest pojedynczy dict
         if isinstance(data, dict):
             self.add_parsed_data(data)
         elif isinstance(data, list):
@@ -319,7 +302,6 @@ class GUIApp(QWidget):
         else:
             self.log_window.append(f"[WARN] Nieoczekiwany typ danych: {type(data)} - {data}")
 
-
     def add_parsed_data(self, frame):
         """Dodanie danych do tabeli (request/response merge)"""
         key = (frame['slave_id'], frame['function'], frame['data_qty'],frame ['message_type'])
@@ -327,11 +309,10 @@ class GUIApp(QWidget):
         message_type = frame.get('message_type', '')
         data = frame.get('data', [])
         
-        # Aktualizacja danych w słowniku
         if key in self.data_dict:
             self.data_dict[key]["occurrences"] += 1
-            self.data_dict[key]["timestamp"] = timestamp  # Zaktualizowanie timestampu
-            self.data_dict[key]["data"] = data  # Zaktualizowanie timestampu
+            self.data_dict[key]["timestamp"] = timestamp  
+            self.data_dict[key]["data"] = data  
         else:
             self.data_dict[key] = {
                 "timestamp": timestamp,
@@ -350,12 +331,11 @@ class GUIApp(QWidget):
 
     def update_parsed_data_table(self):
         """Zaktualizowanie tabeli na podstawie słownika danych"""
-        self.table.setRowCount(0)  # Wyczyszczenie tabeli
+        self.table.setRowCount(0)  
         for key, value in self.data_dict.items():
             row_position = self.table.rowCount()
             self.table.insertRow(row_position)
-            
-            # Bezpieczne formatowanie data_address
+            #Data adress field formating i case if emty str recived
             data_address = value.get("data_address")
             hex_address = ""
             if data_address is not None and str(data_address).strip():
@@ -364,7 +344,7 @@ class GUIApp(QWidget):
                 except (ValueError, TypeError):
                     hex_address = str(data_address)
 
-            # Wstawianie danych do tabeli
+            # Adding data to table view
             self.table.setItem(row_position, 0, QTableWidgetItem(value["timestamp"].replace("T", " ")))
             self.table.setItem(row_position, 3, QTableWidgetItem(value["message_type"]))
             self.table.setItem(row_position, 4, QTableWidgetItem(str(value["slave_id"])))

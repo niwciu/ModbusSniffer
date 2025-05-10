@@ -8,7 +8,7 @@ class ModbusParser:
         self.csv_logger = csv_logger
         self.log = main_logger
         self.on_parsed = on_parsed
-        self.pendingRequests = {}  # Przechowuje (slave_id, fc): (typ_ramki, timestamp, dodatkowe_dane)
+        self.pendingRequests = {}  
 
     def decodeModbus(self, data):
         buffer = data
@@ -44,14 +44,10 @@ class ModbusParser:
         def wrapper(request_handler, response_handler):
             def dynamic_handler(buffer, start, sid, fc):
                 key = (sid, fc)
-                
-                # Rozpoznaj czy to request czy response
                 if key not in self.pendingRequests:
-                    # To jest request - zapisz w pendingRequests
                     self.pendingRequests[key] = ("request", datetime.now().isoformat())
                     return request_handler(buffer, start, sid, fc)
                 else:
-                    # To jest response - usuń z pendingRequests i przetwarzaj
                     self.pendingRequests.pop(key, None)
                     return response_handler(buffer, start, sid, fc)
             return dynamic_handler
@@ -68,12 +64,10 @@ class ModbusParser:
             23: wrapper(self._handle_read_write, self._handle_read_write_response),
         }.get(fc, self._handle_exception if fc >= 0x80 else None)
 
-    # ... (reszta metod pozostaje bez zmian: _handle_read_bits, _handle_read_registers, itd.)
 
     def _is_response_frame(self, buffer, fc, start_index):
         try:
             if fc in [1, 2, 3, 4, 23]:
-                # zakładamy, że response zawiera byte_count i dane
                 byte_count = buffer[start_index + 2]
                 expected = start_index + 3 + byte_count + 2
                 return len(buffer) >= expected

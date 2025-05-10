@@ -1,7 +1,7 @@
 
 import serial
-from module.modbus_parser_new import ModbusParser 
-from module.csv_logger import CSVLogger
+from modules.modbus_parser_new import ModbusParser 
+from modules.csv_logger import CSVLogger
 
 # --------------------------------------------------------------------------- #
 # Sniffer class
