@@ -51,9 +51,9 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-t", "--timeout",
-        type=float,
-        default=None,
-        help="Inter-frame timeout in seconds. If not set, an automatic calculation is used."
+        type=int,
+        default=100,
+        help="Inter-frame timeout in miliseconds. If not set, default vlaue of 100ms is set."
     )
     parser.add_argument(
         "-l", "--log-to-file",

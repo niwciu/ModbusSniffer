@@ -1,5 +1,7 @@
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QComboBox, QCheckBox, QGroupBox, QPushButton, QTextEdit, QTabWidget, QTableWidget, QTableWidgetItem, QStyledItemDelegate, QHeaderView
+from PyQt6.QtGui import QFontMetrics
+from PyQt6.QtSerialPort import QSerialPortInfo
 import sys
 from modules.serial_snooper import SerialSnooper
 from modules.sniffer_utils import normalize_sniffer_config
@@ -106,12 +108,23 @@ class GUIApp(QWidget):
 
         # UI komponenty
         self.port_label = QLabel("Port:")
-        self.port_input = QLineEdit("/dev/ttyUSB0")
+        self.port_input = QComboBox()
+        self.port_input.setEditable(True)  # pozwala na ręczne wpisywanie portu
+
+        def refresh_serial_ports():
+            self.port_input.clear()
+            available_ports = QSerialPortInfo.availablePorts()
+            for port in available_ports:
+                self.port_input.addItem(port.systemLocation())
+
+        self.port_input.showPopup = lambda orig=self.port_input.showPopup: (refresh_serial_ports(), orig())[1]
+
         self.top_layout.addWidget(self.port_label)
         self.top_layout.addWidget(self.port_input)
 
         self.baud_label = QLabel("Baudrate:")
-        self.baud_input = QLineEdit("115200")
+        self.baud_input = QComboBox()
+        self.baud_input.addItems(["4800","9600","19200","38400","57600","115200"])
         self.top_layout.addWidget(self.baud_label)
         self.top_layout.addWidget(self.baud_input)
 
@@ -124,12 +137,20 @@ class GUIApp(QWidget):
         self.layout.addLayout(self.top_layout)
 
         # Timeout Input
-        self.timeout_label = QLabel("Timeout (seconds):")
-        self.timeout_input = QLineEdit("None")
+        self.timeout_label = QLabel("Modbus Timeout:")
+        self.timeout_input = QLineEdit("100")
+        self.timeout_unit_label = QLabel("ms")
+        self.timeout_input.setMaxLength(5)
+        font_metrics = QFontMetrics(self.timeout_input.font())
+        char_width = font_metrics.horizontalAdvance('0')
+
+        self.timeout_input.setFixedWidth(char_width * 5 + 10)
+
         self.top_layout.addWidget(self.timeout_label)
         self.top_layout.addWidget(self.timeout_input)
+        self.top_layout.addWidget(self.timeout_unit_label)
 
-        # Opcje
+        # Options
         self.options_group = QGroupBox("Options")
         self.options_layout = QHBoxLayout()
 
@@ -226,9 +247,6 @@ class GUIApp(QWidget):
         baudrate = int(self.baud_input.text())
         parity_str = self.parity_input.currentText()
         timeout_input = self.timeout_input.text()
-
-        timeout_input = None if timeout_input.strip().lower() == "none" else timeout_input
-
         log_to_file = self.log_to_file_checkbox.isChecked()
         raw = self.raw_checkbox.isChecked()
         raw_only = self.raw_only_checkbox.isChecked()
