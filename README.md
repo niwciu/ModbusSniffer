@@ -112,13 +112,9 @@ python modbus_sniffer_GUI.py
 ---
 # 🔧 ToDo
 
-- Test of new parser with all integrated functions - pending
 - Integrate CSV logging with new modbus parser
 - Improve GUI with:
-    - Clear button for logs and table view
     - Add frame filters
-    - Add comoboxe for selecting pors from ports availabel in the system
-    - Add comoboxe for selecting predefined baudrate
 
 # 📚 Documentation & Support
 

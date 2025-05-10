@@ -1,5 +1,7 @@
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QComboBox, QCheckBox, QGroupBox, QPushButton, QTextEdit, QTabWidget, QTableWidget, QTableWidgetItem, QStyledItemDelegate, QHeaderView
+from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QComboBox, QCheckBox, QGroupBox, QPushButton, QTextEdit, QTabWidget, QTableWidget, QTableWidgetItem, QStyledItemDelegate, QHeaderView, QGridLayout
+from PyQt6.QtGui import QFontMetrics
+from PyQt6.QtSerialPort import QSerialPortInfo
 import sys
 from modules.serial_snooper import SerialSnooper
 from modules.sniffer_utils import normalize_sniffer_config
@@ -104,59 +106,101 @@ class GUIApp(QWidget):
         self.layout = QVBoxLayout()
         self.top_layout = QHBoxLayout()
 
-        # UI komponenty
-        self.port_label = QLabel("Port:")
-        self.port_input = QLineEdit("/dev/ttyUSB0")
-        self.top_layout.addWidget(self.port_label)
-        self.top_layout.addWidget(self.port_input)
+        # ---------- Grid layout for settings ----------
+        # Grupa łącząca oba layouty
+        self.port_settings_grup = QGroupBox("Settings")
 
-        self.baud_label = QLabel("Baudrate:")
-        self.baud_input = QLineEdit("115200")
-        self.top_layout.addWidget(self.baud_label)
-        self.top_layout.addWidget(self.baud_input)
+        # Główny layout pionowy wewnątrz grupy
+        main_settings_layout = QVBoxLayout()
+
+        # ------- settings_layout: ustawienia portu (poziomo) -------
+        self.settings_layout = QHBoxLayout()
+        self.settings_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
+        self.port_label = QLabel("Port:")
+        self.port_input = QComboBox()
+        self.port_input.setEditable(True)
+        self.port_input.setMinimumWidth(150)
+
+        def refresh_serial_ports():
+            self.port_input.clear()
+            available_ports = QSerialPortInfo.availablePorts()
+            for port in available_ports:
+                self.port_input.addItem(port.systemLocation())
+
+        self.port_input.showPopup = lambda orig=self.port_input.showPopup: (refresh_serial_ports(), orig())[1]
+
+        self.settings_layout.addWidget(self.port_label, alignment=Qt.AlignmentFlag.AlignRight)
+        self.settings_layout.addWidget(self.port_input, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        self.baudrate_label = QLabel("Baudrate:")
+        self.baudrate_input = QComboBox()
+        self.baudrate_input.addItems(["9600", "19200", "38400", "57600", "115200"])
+        self.settings_layout.addWidget(self.baudrate_label, alignment=Qt.AlignmentFlag.AlignRight)
+        self.settings_layout.addWidget(self.baudrate_input, alignment=Qt.AlignmentFlag.AlignLeft)
 
         self.parity_label = QLabel("Parity:")
         self.parity_input = QComboBox()
         self.parity_input.addItems(["none", "even", "odd"])
-        self.top_layout.addWidget(self.parity_label)
-        self.top_layout.addWidget(self.parity_input)
+        self.settings_layout.addWidget(self.parity_label, alignment=Qt.AlignmentFlag.AlignRight)
+        self.settings_layout.addWidget(self.parity_input, alignment=Qt.AlignmentFlag.AlignLeft)
 
-        self.layout.addLayout(self.top_layout)
+        # ------- timeout_layout --------------------------------------
+        self.timeout_layout = QHBoxLayout()
+        self.timeout_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
-        # Timeout Input
-        self.timeout_label = QLabel("Timeout (seconds):")
-        self.timeout_input = QLineEdit("None")
-        self.top_layout.addWidget(self.timeout_label)
-        self.top_layout.addWidget(self.timeout_input)
+        self.timeout_label = QLabel("Serial Timeout:")
+        self.timeout_input = QLineEdit("")
+        self.timeout_unit_label = QLabel("ms")
+        self.timeout_input.setMaxLength(5)
+        self.timeout_input.setAlignment(Qt.AlignmentFlag.AlignRight)
 
-        # Opcje
-        self.options_group = QGroupBox("Options")
+        self.timeout_layout.addWidget(self.timeout_label, alignment=Qt.AlignmentFlag.AlignLeft)
+        self.timeout_layout.addWidget(self.timeout_input,alignment=Qt.AlignmentFlag.AlignLeft)
+        self.timeout_layout.addWidget(self.timeout_unit_label,alignment=Qt.AlignmentFlag.AlignLeft)
+
+        # ------- options_layout: checkbox ----------------------------
         self.options_layout = QHBoxLayout()
+        self.options_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
         self.csv_checkbox = QCheckBox("CSV Log")
         self.raw_checkbox = QCheckBox("Show Raw Message")
         self.raw_only_checkbox = QCheckBox("Raw Data Only")
         self.log_to_file_checkbox = QCheckBox("Log to File")
         self.daily_file_checkbox = QCheckBox("Daily File Rotation")
-        
-        self.options_layout.addWidget(self.csv_checkbox)
-        self.options_layout.addWidget(self.raw_checkbox)
-        self.options_layout.addWidget(self.raw_only_checkbox)
-        self.options_layout.addWidget(self.log_to_file_checkbox)
-        self.options_layout.addWidget(self.daily_file_checkbox)
 
-        self.options_group.setLayout(self.options_layout)
-        self.layout.addWidget(self.options_group)
+        font_metrics = QFontMetrics(self.timeout_input.font())
+        char_width = font_metrics.horizontalAdvance('0')
+        self.timeout_input.setFixedWidth(char_width * 5 + 10)
 
+        self.options_layout.addWidget(self.log_to_file_checkbox,alignment=Qt.AlignmentFlag.AlignLeft)
+        self.options_layout.addWidget(self.raw_checkbox,alignment=Qt.AlignmentFlag.AlignLeft)
+        self.options_layout.addWidget(self.raw_only_checkbox,alignment=Qt.AlignmentFlag.AlignLeft)
+        self.options_layout.addWidget(self.csv_checkbox,alignment=Qt.AlignmentFlag.AlignLeft)
+        self.options_layout.addWidget(self.daily_file_checkbox,alignment=Qt.AlignmentFlag.AlignLeft)
+
+
+        # ------- Add all layouts to group -------
+        main_settings_layout.addLayout(self.settings_layout)
+        main_settings_layout.addLayout(self.timeout_layout)
+        main_settings_layout.addLayout(self.options_layout)
+        self.port_settings_grup.setLayout(main_settings_layout)
+
+        # Dodaj grupę do głównego layoutu aplikacji
+        self.layout.addWidget(self.port_settings_grup)
+
+        # ---------- Start/Stop Buttons ----------
         self.button_layout = QHBoxLayout()
         self.start_btn = QPushButton("Start")
         self.stop_btn = QPushButton("Stop")
+        self.clear_btn = QPushButton("Clear View")
         self.stop_btn.setEnabled(False)
         self.button_layout.addWidget(self.start_btn)
         self.button_layout.addWidget(self.stop_btn)
+        self.button_layout.addWidget(self.clear_btn)
         self.layout.addLayout(self.button_layout)
 
-        # Tabs def
+        # ---------- Tabs ----------
         self.tabs = QTabWidget()
         self.tab1 = QWidget()
         self.tab2 = QWidget()
@@ -164,47 +208,39 @@ class GUIApp(QWidget):
         self.tabs.addTab(self.tab1, "Logs")
         self.tabs.addTab(self.tab2, "Parsed Data")
 
-        # Tab 1 - logs
+        # Tab 1
         self.log_window = QTextEdit()
         self.log_window.setReadOnly(True)
         self.tab1_layout = QVBoxLayout()
         self.tab1_layout.addWidget(self.log_window)
         self.tab1.setLayout(self.tab1_layout)
 
-        # Tab 2: Parsed mesega data table
+        # Tab 2
         self.table = QTableWidget()
         self.table.setColumnCount(10)
         self.table.setHorizontalHeaderLabels([
-            "Timestamp", "Fn Code","Function name","Msg Type", "Slave ID", "Data Address", "Data Qty", "Byte Count", "Data", "Occurrences"
+            "Timestamp", "Fn Code", "Function name", "Msg Type", "Slave ID","Data Address", "Data Qty", "Byte Count", "Data", "Occurrences"
         ])
-        
+
         delegate = AdvancedAlignDelegate()
-        # columns alignment set section
-        delegate.set_column_alignment(0, Qt.AlignmentFlag.AlignLeft) 
-        delegate.set_column_alignment(2, Qt.AlignmentFlag.AlignLeft) 
+        delegate.set_column_alignment(0, Qt.AlignmentFlag.AlignLeft)
+        delegate.set_column_alignment(2, Qt.AlignmentFlag.AlignLeft)
         delegate.set_column_alignment(3, Qt.AlignmentFlag.AlignLeft)
-        delegate.set_column_alignment(8, Qt.AlignmentFlag.AlignLeft) 
-        
-        # delegate.set_column_alignment(X, Qt.AlignmentFlag.AlignRight, Qt.AlignmentFlag.AlignVCenter)
-        
-        delegate.set_column_alignment(4, Qt.AlignmentFlag.AlignHCenter, Qt.AlignmentFlag.AlignVCenter)
+        delegate.set_column_alignment(8, Qt.AlignmentFlag.AlignLeft)
         delegate.set_column_alignment(1, Qt.AlignmentFlag.AlignHCenter, Qt.AlignmentFlag.AlignVCenter)
+        delegate.set_column_alignment(4, Qt.AlignmentFlag.AlignHCenter, Qt.AlignmentFlag.AlignVCenter)
         delegate.set_column_alignment(5, Qt.AlignmentFlag.AlignHCenter, Qt.AlignmentFlag.AlignVCenter)
         delegate.set_column_alignment(6, Qt.AlignmentFlag.AlignHCenter, Qt.AlignmentFlag.AlignVCenter)
         delegate.set_column_alignment(7, Qt.AlignmentFlag.AlignHCenter, Qt.AlignmentFlag.AlignVCenter)
         delegate.set_column_alignment(9, Qt.AlignmentFlag.AlignHCenter, Qt.AlignmentFlag.AlignVCenter)
         self.table.setItemDelegate(delegate)
-                             
-        # Header Alignment
+
         header = self.table.horizontalHeader()
         header.setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        # Set specific column autoresize to content 
-        header = self.table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)  
-        header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)       
-        header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)    
-        header.setSectionResizeMode(9, QHeaderView.ResizeMode.ResizeToContents)        
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(9, QHeaderView.ResizeMode.ResizeToContents)
         self.table.resizeColumnsToContents()
 
         self.tab2_layout = QVBoxLayout()
@@ -215,20 +251,19 @@ class GUIApp(QWidget):
         self.setLayout(self.layout)
 
         self.sniffer_thread = None
-        self.data_dict = {}  
+        self.data_dict = {}
 
         # Events
         self.start_btn.clicked.connect(self.start_sniffer)
         self.stop_btn.clicked.connect(self.stop_sniffer)
+        self.clear_btn.clicked.connect(self.clear_sniffer_view)
 
     def start_sniffer(self):
-        port = self.port_input.text()
-        baudrate = int(self.baud_input.text())
+        port = self.port_input.currentText()
+        baudrate = int(self.baudrate_input.currentText())
         parity_str = self.parity_input.currentText()
         timeout_input = self.timeout_input.text()
-
-        timeout_input = None if timeout_input.strip().lower() == "none" else timeout_input
-
+        timeout_input = None if timeout_input=="" else timeout_input
         log_to_file = self.log_to_file_checkbox.isChecked()
         raw = self.raw_checkbox.isChecked()
         raw_only = self.raw_only_checkbox.isChecked()
@@ -264,6 +299,18 @@ class GUIApp(QWidget):
         self.start_btn.setEnabled(True)
         self.stop_btn.setEnabled(False)
         self.log_window.append("<span style='color:yellow'>[INFO] Sniffer stopped.</span>")
+    
+    def clear_sniffer_view(self):
+        print ("cleared")
+        self.table.setRowCount(0)
+        self.data_dict.clear()
+
+        self.log_window.clear()
+
+        self.last_master = None
+        self.last_ok_color = "blue"
+
+        
 
     def update_log_window(self, log_entry):
         """
@@ -300,11 +347,66 @@ class GUIApp(QWidget):
             for frame in data:
                 self.add_parsed_data(frame)
         else:
-            self.log_window.append(f"[WARN] Nieoczekiwany typ danych: {type(data)} - {data}")
+            self.log_window.append(f"[WARN] Unexpected data type: {type(data)} - {data}")
+
+    def format_table_fields(self, value):
+        """
+        Formats the address and quantity fields depending on function code and message type.
+        Returns (formatted_address, formatted_quantity)
+        """
+        function = value.get("function")
+        message_type = value.get("message_type")
+
+        if function == 23 and message_type == "request":
+            try:
+                read_addr = int(value["read_address"])
+                write_addr = int(value["write_address"])
+                read_qty = int(value["read_quantity"])
+                write_qty = int(value["write_quantity"])
+                formatted_address = f"R: 0x{read_addr:04X} W: 0x{write_addr:04X}"
+                formatted_quantity = f"R: {read_qty} W: {write_qty}"
+            except (ValueError, TypeError):
+                formatted_address = f"R: {value['read_address']} W: {value['write_address']}"
+                formatted_quantity = f"R: {value['read_quantity']} W: {value['write_quantity']}"
+        else:
+            # Fallback for other function codes
+            data_address = value.get("data_address")
+            if data_address is not None and str(data_address).strip():
+                try:
+                    formatted_address = f"0x{int(data_address):04X}"
+                except (ValueError, TypeError):
+                    formatted_address = str(data_address)
+            else:
+                formatted_address = ""
+
+            formatted_quantity = str(value.get("data_qty", ""))
+
+        return formatted_address, formatted_quantity
+    
+    def format_data_field(self, value):
+        """
+        Returns formatted string for the 'data' column (col 8), depending on message type.
+        """
+    def format_data_field(self, value):
+        """
+        Formats data column (col 8). If 'exception', shows exception code. 
+        Otherwise formats as list of uint16_t words in hex (big-endian).
+        """
+        if value.get("function_name") == "exception":
+            exception_code = value.get("exception_code")
+            if exception_code is not None:
+                try:
+                    return f"Exception Code: 0x{int(exception_code):02X}"
+                except (ValueError, TypeError):
+                    return f"Exception Code: {exception_code}"
+            else:
+                return "Exception Code: Unknown"
+        else:
+            return (", ".join(f"0x{byte:04X}" for byte in value["data"]))
+
 
     def add_parsed_data(self, frame):
-        """Dodanie danych do tabeli (request/response merge)"""
-        key = (frame['slave_id'], frame['function'], frame['data_qty'],frame ['message_type'])
+        key = (frame['slave_id'], frame['function'], frame['data_qty'],frame['data_address'],frame ['message_type'], frame ['exception_code'])
         timestamp = frame.get('timestamp', '')
         message_type = frame.get('message_type', '')
         data = frame.get('data', [])
@@ -324,13 +426,18 @@ class GUIApp(QWidget):
                 "data_qty": frame['data_qty'],
                 "byte_count": frame['byte_cnt'],
                 "data": data,
-                "occurrences": 1
+                "occurrences": 1,
+                "exception_code":frame ['exception_code'],
+                #FC 23 additional fields
+                "read_address": frame['read_address'],
+                "read_quantity": frame['read_quantity'],
+                "write_address": frame['write_address'],
+                "write_quantity": frame['write_quantity'],
             }
 
         self.update_parsed_data_table()
 
     def update_parsed_data_table(self):
-        """Zaktualizowanie tabeli na podstawie słownika danych"""
         self.table.setRowCount(0)  
         for key, value in self.data_dict.items():
             row_position = self.table.rowCount()
@@ -344,16 +451,19 @@ class GUIApp(QWidget):
                 except (ValueError, TypeError):
                     hex_address = str(data_address)
 
+            formatted_address, formatted_quantity = self.format_table_fields(value)
+            formatted_data = self.format_data_field(value)
+
             # Adding data to table view
             self.table.setItem(row_position, 0, QTableWidgetItem(value["timestamp"].replace("T", " ")))
             self.table.setItem(row_position, 3, QTableWidgetItem(value["message_type"]))
             self.table.setItem(row_position, 4, QTableWidgetItem(str(value["slave_id"])))
             self.table.setItem(row_position, 1, QTableWidgetItem(f"0x{value['function']:02X}"))
             self.table.setItem(row_position, 2, QTableWidgetItem(value["function_name"]))
-            self.table.setItem(row_position, 5, QTableWidgetItem(hex_address))  
-            self.table.setItem(row_position, 6, QTableWidgetItem(str(value["data_qty"])))
+            self.table.setItem(row_position, 5, QTableWidgetItem(formatted_address))
+            self.table.setItem(row_position, 6, QTableWidgetItem(formatted_quantity))
             self.table.setItem(row_position, 7, QTableWidgetItem(str(value["byte_count"])))
-            self.table.setItem(row_position, 8, QTableWidgetItem(", ".join(f"0x{byte:02X}" for byte in value["data"])))
+            self.table.setItem(row_position, 8, QTableWidgetItem(formatted_data))
             self.table.setItem(row_position, 9, QTableWidgetItem(str(value["occurrences"])))
             
         self.table.resizeColumnsToContents()

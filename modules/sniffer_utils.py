@@ -1,20 +1,10 @@
 import serial
 
-# --------------------------------------------------------------------------- #
-# Calculate the default timeout with the baudrate
-# --------------------------------------------------------------------------- #
-def calcTimeout(baud):
-    if baud < 19200:
-        timeout = 33 / baud
-    else:
-        timeout = 0.001750
-    return timeout
-
 def normalize_sniffer_config(
     port,
     baudrate,
     parity_str,
-    timeout_input=None,
+    timeout_input,
     log_to_file=False,
     raw=False,
     raw_only=False,
@@ -29,7 +19,7 @@ def normalize_sniffer_config(
     else:
         parity = serial.PARITY_ODD
 
-    timeout = calcTimeout(baudrate) if timeout_input is None else float(timeout_input)
+    timeout = calcTimeout(baudrate) if timeout_input is None else float(timeout_input)/1000
 
     if (raw or raw_only) and ( not GUI):
         log_to_file = True
@@ -48,3 +38,13 @@ def normalize_sniffer_config(
         "daily_file": daily_file,
         "log_to_file": log_to_file
     }
+
+# --------------------------------------------------------------------------- #
+# Calculate the default timeout with the baudrate
+# --------------------------------------------------------------------------- #
+def calcTimeout(baud):
+    if baud < 19200:
+        timeout = 36 / baud
+    else:
+        timeout = 0.001850  #3,5T
+    return timeout

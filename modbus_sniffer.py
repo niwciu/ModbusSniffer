@@ -51,7 +51,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-t", "--timeout",
-        type=float,
+        type=int,
         default=None,
         help="Inter-frame timeout in seconds. If not set, an automatic calculation is used."
     )

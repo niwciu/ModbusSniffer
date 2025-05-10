@@ -3,9 +3,6 @@ import serial
 from modules.modbus_parser_new import ModbusParser 
 from modules.csv_logger import CSVLogger
 
-# --------------------------------------------------------------------------- #
-# Sniffer class
-# --------------------------------------------------------------------------- #
 class SerialSnooper:
     def __init__(
         self,
@@ -13,11 +10,11 @@ class SerialSnooper:
         port,
         baud=9600,
         parity="none",
-        timeout=0,
+        timeout=100,
         raw_log=False,
         raw_only=False,
-        csv_log=False,         # <-- NEW
-        daily_file=False,       # <-- NEW: re-use the same daily-file logic
+        csv_log=False,         
+        daily_file=False,     
         data_handler=None
     ):
         self.port = port
@@ -33,7 +30,7 @@ class SerialSnooper:
         self.csv_logger = CSVLogger(
             enable_csv=csv_log,
             daily_file=daily_file,
-            output_dir=".",  # or "logs" if you prefer
+            output_dir="./logs", 
             base_filename="log"
         ) if csv_log else None
 
@@ -44,7 +41,7 @@ class SerialSnooper:
             + "\tbytesize: 8\n"
             + f"\tparity: {parity}\n"
             + "\tstopbits: 1\n"
-            + f"\ttimeout: {timeout}\n"
+            + f"\ttimeout: {timeout}s\n"
         )
         self.connection = serial.Serial(
             port=port,
@@ -52,7 +49,7 @@ class SerialSnooper:
             bytesize=serial.EIGHTBITS,
             parity=parity,
             stopbits=serial.STOPBITS_ONE,
-            timeout=timeout,
+            timeout=timeout, 
         )
         self.log.debug(self.connection)
 
