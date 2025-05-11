@@ -101,8 +101,7 @@ If you are using Ubuntu (or any other Linux-based OS), there's a script to autom
 1. Run the following command to build the executable:
 
     ```powershell
-    sudo chmod +x build.sh
-    ./build.sh
+    ./build.bat
     ```
     > **Note:**
     What build.bat does
@@ -196,12 +195,6 @@ python3 modbus_sniffer.py -p /dev/ttyUSB0 -b 115200 -r none
 For the full changelog, including detailed descriptions of all updates, please refer to the [CHANGELOG.md](CHANGELOG.md).
 
 ---
-
-# 🔧 ToDo
-
-- Integrate CSV logging with new Modbus parser
-- Improve GUI with:
-    - Add frame filters
 
 # 🔧 ToDo
 

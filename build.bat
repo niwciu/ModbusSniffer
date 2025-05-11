@@ -33,23 +33,15 @@ pip install pyinstaller
 
 echo.
 echo ==== [4/6] Building EXE with icon ====
-pyinstaller --onefile --icon=%ICON% --name %APP_NAME% %MAIN_PY%
+pyinstaller --onefile --noconsole --icon=%ICON% --name %APP_NAME% %MAIN_PY%
 
 echo.
 echo ==== [5/6] Creating shortcuts ====
 REM Desktop shortcut
-powershell -Command ^
-  "$s=(New-Object -COM WScript.Shell).CreateShortcut('%DESKTOP_LINK%'); ^
-    $s.TargetPath='$(pwd)\%DIST_DIR%\%APP_NAME%.exe'; ^
-    $s.IconLocation='$(pwd)\%ICON%'; ^
-    $s.Save()"
+powershell -Command "$desktop = [Environment]::GetFolderPath('Desktop'); $s = (New-Object -COM WScript.Shell).CreateShortcut(\"$desktop\ModbusSniffer.lnk\"); $s.TargetPath = \"$(Resolve-Path dist\ModbusSniffer.exe)\"; $s.IconLocation = \"$(Resolve-Path images\icon.ico)\"; $s.Save()"
 
 REM Start Menu shortcut
-powershell -Command ^
-  "$s=(New-Object -COM WScript.Shell).CreateShortcut('%STARTMENU_LINK%'); ^
-    $s.TargetPath='$(pwd)\%DIST_DIR%\%APP_NAME%.exe'; ^
-    $s.IconLocation='$(pwd)\%ICON%'; ^
-    $s.Save()"
+powershell -Command "$startmenu = [Environment]::GetFolderPath('StartMenu'); $s = (New-Object -COM WScript.Shell).CreateShortcut(\"$startmenu\Programs\ModbusSniffer.lnk\"); $s.TargetPath = \"$(Resolve-Path dist\ModbusSniffer.exe)\"; $s.IconLocation = \"$(Resolve-Path images\icon.ico)\"; $s.Save()"
 
 echo.
 echo ==== [6/6] Done ====
