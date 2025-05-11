@@ -1,0 +1,109 @@
+name: Build and Release ModbusSniffer
+
+on:
+  push:
+    tags:
+      - 'v*'  # uruchom przy każdym tagu zaczynającym się od "v"
+
+jobs:
+  build_ubuntu:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install dependencies and build
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install -r requirements.txt
+          pip install pyinstaller
+          pyinstaller --onefile --name "ModbusSniffer" modbus_sniffer_GUI.py
+      
+      - name: Set executable permissions on the built file
+        run: chmod +x dist/ModbusSniffer
+
+      - name: Upload Ubuntu artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ModbusSniffer-linux
+          path: dist/ModbusSniffer
+
+  build_windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install dependencies and build
+        run: |
+          python -m venv venv
+          .\venv\Scripts\activate
+          pip install -r requirements.txt
+          pip install pyinstaller
+          pyinstaller --onefile --name "ModbusSniffer" --icon="./images/icon.ico" modbus_sniffer_GUI.py
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ModbusSniffer-windows
+          path: dist/ModbusSniffer.exe
+
+  release:
+    runs-on: ubuntu-latest
+    needs: [build_ubuntu, build_windows]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download Ubuntu artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ModbusSniffer-linux
+          path: dist/
+
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ModbusSniffer-windows
+          path: dist/
+
+      - name: Extract changelog for tag
+        id: changelog
+        run: |
+          # Extract tag name (e.g., v1.0.2 from refs/tags/v1.0.2)
+          TAG_NAME=$(echo ${GITHUB_REF##*/} | sed 's/^v//')  # Usuwamy 'v' przed numerem wersji, jeśli tag zaczyna się od "v"
+      
+          # Extract changelog section corresponding to the tag
+          CONTENT=$(awk "/## ${TAG_NAME}/,/^## /" CHANGELOG.md | head -n -1)
+      
+          # Output changelog section to the GitHub Actions environment
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CONTENT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body: ${{ steps.changelog.outputs.changelog }}
+          tag_name: ${{ github.ref_name }}
+          files: |
+            dist/ModbusSniffer
+            dist/ModbusSniffer.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        

@@ -191,16 +191,18 @@ python3 modbus_sniffer.py -p /dev/ttyUSB0 -b 115200 -r none
 
 ---
 
-# 🆕 What’s New (Changelog)
+# 🆕 What’s New
 
-1. 📦 **Modularization:** Splitted code into modules and classes for maintainability
-2. 🧩 **Parser Rework:** `ModbusParser` class completely rewritten for clarity and extensibility
-3. 🖼️ **GUI Interface:** Added a simple, user-friendly GUI
-4. 🔁 **Full CLI Feature Set in GUI:** All previous CLI commands available via graphical menus (CSV under dev)
-5. 📊 **Frame Table View:** Displays the last captured frames with filtering options
-6. 🌈 **Enhanced Live Logging:** Color distinction for request/response pairs; unmatched requests marked in red
+For the full changelog, including detailed descriptions of all updates, please refer to the [CHANGELOG.md](CHANGELOG.md).
 
 ---
+
+# 🔧 ToDo
+
+- Integrate CSV logging with new Modbus parser
+- Improve GUI with:
+    - Add frame filters
+
 # 🔧 ToDo
 
 - Integrate CSV logging with new modbus parser
