@@ -35,7 +35,90 @@ This version brings:
 ---
 
 
-# 🛠️ Installation & Setup
+# 🛠️ Build & Install
+## 1. General Requirements
+
+### - Python 3 installed
+### - pip3 installed 
+#### Linux
+```bash
+sudo apt install python3-pip
+```
+#### Windows
+```powershell
+python -m ensurepip --upgrade
+```
+
+## 2. Clone the Repository
+
+```bash
+git clone https://github.com/niwciu/ModbusSniffer.git
+cd ModbusSniffer
+```
+__________________________
+
+
+## 3. Build Executable (for Ubuntu and Windows)
+If you'd like to generate a standalone executable application for Ubuntu or Windows, you can follow the steps below.
+
+
+> **Note:** f you only want to **run** the GUI app without generating a standalone executable, you can skip the build process and go straight to running the Python script as shown in
+> 
+> **▶️ Running GUI app without build**.
+
+### Ubuntu (Linux) - Build with build.sh
+
+## 3. Build Executable (for Ubuntu and Windows)
+If you'd like to generate a standalone executable application for Ubuntu or Windows, you can follow the steps below.
+
+> **Note:** If you only want to **run** the app and not build it, skip this step and go to **▶️ Running GUI app without build**.
+
+> **Alternative Option:** If you don't want to build the application yourself, you can **download pre-built executables** for both Ubuntu and Windows from [this link](#) (insert actual download link here). 
+
+### Ubuntu (Linux) - Build with build.sh
+
+If you are using Ubuntu (or any other Linux-based OS), there's a script to automatically generate the application for you, and it will also add the application to your system's menu as a clickable entry.
+
+1. Run the following command to build the executable:
+
+    ```bash
+    sudo chmod +x build.sh
+    ./build.sh
+    ```
+
+    > **Note:**   
+    This script will:
+    >* Cleans up previous build files (build/, dist/, .spec, __pycache__).
+    >* Create a virtual environment.
+    >* Install the necessary dependencies.
+    >* Use PyInstaller to build the application.
+    >* Copy the resulting executable to the appropriate folder.
+    >* Create a .desktop shortcut and add it to ~/.local/share/applications/, making the application available from your system's menu.
+
+2. After running build.sh, you will find the built application in the dist/ folder. The .desktop file will also be placed in your system's application menu, allowing you to easily launch the application without needing to manually navigate to the executable.
+### Windows - Build & Install
+
+1. Run the following command to build the executable:
+
+    ```powershell
+    ./build.bat
+    ```
+    > **Note:**
+    What build.bat does
+    > * Cleans up previous build files (build/, dist/, .spec, __pycache__).
+    > * Creates and activates a virtual environment (.venv/).
+    > * Installs dependencies from requirements.txt and installs PyInstaller.
+    > * Builds a standalone .exe from the Python script using PyInstaller and a custom icon.
+    > * Creates desktop and Start Menu shortcuts pointing to the executable, using the icon.
+    > * Deactivates the virtual environment and pauses for user review.
+
+
+2. After running build.sh, you will find the built application in the dist/ folder. You will find also shortcuts on desktop as well as in the start menu on your system.
+
+> **Alternative Option:** You can also **download pre-built executables** for Windows from [this link](#) (insert actual download link here). 
+
+
+# ▶️ Running GUI app without build
 ## 1. General Requirements
 
 ### - Python 3 installed
@@ -44,14 +127,13 @@ This version brings:
 sudo apt install python3-pip
 ```
 
-## 1. Clone the Repository
+## 2. Clone the Repository
 
 ```bash
 git clone https://github.com/niwciu/ModbusSniffer.git
 cd ModbusSniffer
 ```
-
-## 2. Create and Activate Virtual Environment
+## 3. Create and Activate Virtual Environment
 
 ### Linux / macOS
 
@@ -67,49 +149,53 @@ python -m venv .venv               # create venv
 .\.venv\Scripts\Activate.ps1       # activate
 ```
 
-## 3. Install Dependencies
+## 4. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
-## 4. Deactivate Virtual Environment
+
+## 5.Run GUI app
+
+```bash
+python3 modbus_sniffer_GUI.py
+```
+
+## 6. Deactivate Virtual Environment
 ```bash
 deactivate 
 ```
 
-# 🎮 Usage
-## Create and Activate Virtual Environment befor running app
-(Info can be found in section  **🛠️ Installation & Setup** above)
-## CLI Mode
-### Detail information aout usage of CLI version
+# 🎮 CLI app Usage
+
+## 1. Clone the Repository
+
+```bash
+git clone https://github.com/niwciu/ModbusSniffer.git
+cd ModbusSniffer
+```
+
+## 2. Detail information aout usage of CLI version
+
 
 ```bash
 python3 modbus_sniffer.py -h
 ```
-### Example of usage
+## 3. Example of usage - running sniffer on port USB0 with baudrate 115200 and no parity
 
 ```bash
 python3 modbus_sniffer.py -p /dev/ttyUSB0 -b 115200 -r none
 ```
 
-## GUI Mode
-
-```bash
-python modbus_sniffer_GUI.py
-```
 
 ---
 
-# 🆕 What’s New (Changelog)
+# 🆕 What’s New
 
-1. 📦 **Modularization:** Splitted code into modules and classes for maintainability
-2. 🧩 **Parser Rework:** `ModbusParser` class completely rewritten for clarity and extensibility
-3. 🖼️ **GUI Interface:** Added a simple, user-friendly GUI
-4. 🔁 **Full CLI Feature Set in GUI:** All previous CLI commands available via graphical menus (CSV under dev)
-5. 📊 **Frame Table View:** Displays the last captured frames with filtering options
-6. 🌈 **Enhanced Live Logging:** Color distinction for request/response pairs; unmatched requests marked in red
+For the full changelog, including detailed descriptions of all updates, please refer to the [CHANGELOG.md](CHANGELOG.md).
 
 ---
+
 # 🔧 ToDo
 
 - Integrate CSV logging with new modbus parser
@@ -155,3 +241,4 @@ Fork maintained by **niwciu** with enhancements described above.
 ![myEmbeddedWayBanerWhiteSmaller](https://github.com/user-attachments/assets/f4825882-e285-4e02-a75c-68fc86ff5716)
 ***
 </div>
+

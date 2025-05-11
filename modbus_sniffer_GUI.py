@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLa
 from PyQt6.QtGui import QFontMetrics
 from PyQt6.QtSerialPort import QSerialPortInfo
 import sys
+import platform 
 from modules.serial_snooper import SerialSnooper
 from modules.sniffer_utils import normalize_sniffer_config
 from modules.main_logger import configure_logging
@@ -122,11 +123,22 @@ class GUIApp(QWidget):
         self.port_input.setEditable(True)
         self.port_input.setMinimumWidth(150)
 
+        # def refresh_serial_ports():
+        #     self.port_input.clear()
+        #     available_ports = QSerialPortInfo.availablePorts()
+        #     for port in available_ports:
+        #         self.port_input.addItem(port.systemLocation())
+
         def refresh_serial_ports():
             self.port_input.clear()
             available_ports = QSerialPortInfo.availablePorts()
             for port in available_ports:
-                self.port_input.addItem(port.systemLocation())
+                system_location = port.systemLocation()
+                if platform.system() == "Windows" and system_location.startswith('\\\\.\\'):
+                    clean_name = system_location.replace('\\\\.\\', '')
+                else:
+                    clean_name = system_location
+                self.port_input.addItem(clean_name)
 
         self.port_input.showPopup = lambda orig=self.port_input.showPopup: (refresh_serial_ports(), orig())[1]
 

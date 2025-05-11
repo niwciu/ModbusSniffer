@@ -1,3 +1,5 @@
+import os
+import sys
 import logging
 from logging.handlers import TimedRotatingFileHandler
 from datetime import datetime
@@ -42,29 +44,44 @@ def configure_logging(log_to_file=True, daily_file=False, gui_callback=None):
 
     formatter = MyFormatter()
 
+    # Console handler
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
     log.addHandler(console_handler)
 
+    # GUI handler
     if gui_callback:
         gui_handler = GuiLogHandler(gui_callback)
         gui_handler.setFormatter(formatter)
         log.addHandler(gui_handler)
 
+    # Log to file
     if log_to_file:
+        # Determine the base directory for the application
+        if getattr(sys, 'frozen', False):
+            base_dir = os.path.dirname(sys.executable)  # If bundled with PyInstaller
+        else:
+            base_dir = os.path.dirname(os.path.abspath(__file__))  # For source .py during development
+
+        # Change the current working directory to the base directory of the app
+        os.chdir(base_dir)
+
+        # Log file name (rotate logs with timestamp or daily)
         current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         filename = f'log_{current_time}.log'
 
+        log_file_path = os.path.join(base_dir, filename)
+
         if daily_file:
             handler = TimedRotatingFileHandler(
-                filename,
+                log_file_path,
                 when='midnight',
                 interval=1,
                 backupCount=7,
                 encoding='utf-8'
             )
         else:
-            handler = logging.FileHandler(filename, encoding='utf-8')
+            handler = logging.FileHandler(log_file_path, encoding='utf-8')
 
         handler.setFormatter(formatter)
         log.addHandler(handler)
