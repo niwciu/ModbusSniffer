@@ -1,217 +1,188 @@
-# 🚀 ModbusSniffer with GUI 🚀
 
-Welcome to **ModbusSniffer** — an enhanced fork of the original ModbusSniffer tool for RTU traffic analysis. 
+# 🐍 ModbusSniffer – Free Modbus RTU Analyzer with GUI (Python / PyQt6)
 
+A lightweight and user-friendly Modbus RTU sniffer tool with a graphical interface.  
+Easily analyze and debug communication between PLCs, HMIs, and other Modbus RTU devices via serial ports.
 
-Print all packets on bus from either slave or master and writes them to a logfile.
-
-Useful for sniffing packets between two devices to ensure correct operation.
-
-This fork bring lot of improvements from backend as welll as new GUI with some features.
+[![GitHub release](https://img.shields.io/github/v/release/niwciu/ModbusSniffer)](https://github.com/niwciu/ModbusSniffer/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 <div align="center">
-
-
-![Demo](https://github.com/niwciu/ModbusSniffer/blob/main/doc/gui.gif?raw=true)
-
+<img src="https://github.com/niwciu/ModbusSniffer/blob/main/doc/gui.gif?raw=true" alt="Demo" />
 </div>
 
+---
 
+## 🚀 Why ModbusSniffer (This Fork)?
+
+### 🔍 General Highlights
+
+- 🧰 Sniffs raw Modbus RTU frames from serial ports (RS-485, USB)
+- 🖥️ Graphical User Interface (PyQt6) — no terminal needed
+- 📋 Frame table: Real-time view with decoded address, function code, and data
+- 🌈 Live Logging: Color-coded request–response pairs, unmatched requests highlighted
+- 🪟 Cross-platform: Windows & Linux
+- 🆓 Free & Open Source (MIT license)
+
+### 🛠️ Why This Fork (What's New)
+
+- 💻 Modular code refactor — clear separation into modules and classes
+- 🧠 Rewritten Modbus parser (`ModbusParser` class) with clean structure
+- 🖥️ Fully integrated GUI (previously only CLI)
+- 🔄 All command-line functionality preserved and upgraded into the GUI
 
 ---
 
+## 🧰 Easy Installation (Pre-built Binaries or Install Scripts for Windows and Linux)
 
-# ❓ Why This Fork?
+You don't need to build anything manually!  
+This project uses GitHub Actions (GHA) to automatically build and publish verified binaries for each release.  
+Pre-built versions for Windows and Ubuntu are available under the [Releases](https://github.com/niwciu/ModbusSniffer/releases) tab.
 
-This version brings:
-
-* **💻 Code Refactor:** Modular architecture with clear separation into modules and classes
-* **🛠️ Parser Overhaul:** Fully rewritten `ModbusParser` as a dedicated class
-* **🖥️ GUI Added:** A basic graphical interface for easier use
-* **🔄 CLI → GUI:** All command-line functionality integrated into the GUI
-* **📋 Frame Table:** Real-time view of the latest captured frames
-* **🌈 Live Logging:** Color-coded request–response pairs; unmatched requests highlighted in red
+For custom builds and automatic shortcut setup, see the **🛠️ Build & Install** section below.
 
 ---
 
+## 🛠️ Build & Install
 
-# 🛠️ Build & Install
-## 1. General Requirements
+### 1. General Requirements
 
-### - Python 3 installed
-### - pip3 installed 
-#### Linux
+#### - Python 3 installed
+#### - pip3 installed 
+
+#### 🐧 Linux
 ```bash
 sudo apt install python3-pip
 ```
-#### Windows
+
+#### 🪟 Windows
 ```powershell
 python -m ensurepip --upgrade
 ```
 
-## 2. Clone the Repository
+### 2. Clone the Repository
 
 ```bash
 git clone https://github.com/niwciu/ModbusSniffer.git
 cd ModbusSniffer
 ```
-__________________________
 
-
-## 3. Build Executable (for Ubuntu and Windows)
-If you'd like to generate a standalone executable application for Ubuntu or Windows, you can follow the steps below.
-
-
-> **Note:** f you only want to **run** the GUI app without generating a standalone executable, you can skip the build process and go straight to running the Python script as shown in
-> 
-> **▶️ Running GUI app without build**.
-
-### Ubuntu (Linux) - Build with build.sh
-
-## 3. Build Executable (for Ubuntu and Windows)
-If you'd like to generate a standalone executable application for Ubuntu or Windows, you can follow the steps below.
+### 3. Build Executable (for Ubuntu and Windows)
 
 > **Note:** If you only want to **run** the app and not build it, skip this step and go to **▶️ Running GUI app without build**.
 
-> **Alternative Option:** If you don't want to build the application yourself, you can **download pre-built executables** for both Ubuntu and Windows from [this link](#) (insert actual download link here). 
+#### 🐧 Linux
 
-### Ubuntu (Linux) - Build with build.sh
-
-If you are using Ubuntu (or any other Linux-based OS), there's a script to automatically generate the application for you, and it will also add the application to your system's menu as a clickable entry.
-
-1. Run the following command to build the executable:
-
-    ```bash
-    sudo chmod +x build.sh
-    ./build.sh
-    ```
-
-    > **Note:**   
-    This script will:
-    >* Cleans up previous build files (build/, dist/, .spec, __pycache__).
-    >* Create a virtual environment.
-    >* Install the necessary dependencies.
-    >* Use PyInstaller to build the application.
-    >* Copy the resulting executable to the appropriate folder.
-    >* Create a .desktop shortcut and add it to ~/.local/share/applications/, making the application available from your system's menu.
-
-2. After running build.sh, you will find the built application in the dist/ folder. The .desktop file will also be placed in your system's application menu, allowing you to easily launch the application without needing to manually navigate to the executable.
-### Windows - Build & Install
-
-1. Run the following command to build the executable:
-
-    ```powershell
-    ./build.bat
-    ```
-    > **Note:**
-    What build.bat does
-    > * Cleans up previous build files (build/, dist/, .spec, __pycache__).
-    > * Creates and activates a virtual environment (.venv/).
-    > * Installs dependencies from requirements.txt and installs PyInstaller.
-    > * Builds a standalone .exe from the Python script using PyInstaller and a custom icon.
-    > * Creates desktop and Start Menu shortcuts pointing to the executable, using the icon.
-    > * Deactivates the virtual environment and pauses for user review.
-
-
-2. After running build.sh, you will find the built application in the dist/ folder. You will find also shortcuts on desktop as well as in the start menu on your system.
-
-> **Alternative Option:** You can also **download pre-built executables** for Windows from [this link](#) (insert actual download link here). 
-
-
-# ▶️ Running GUI app without build
-## 1. General Requirements
-
-### - Python 3 installed
-### - pip3 installed 
 ```bash
-sudo apt install python3-pip
+sudo chmod +x build.sh
+./build.sh
 ```
 
-## 2. Clone the Repository
+> This script:
+> * Cleans previous build files (build/, dist/, .spec, \_\_pycache\_\_)
+> * Creates a virtual environment and installs dependencies
+> * Uses PyInstaller to build the app
+> * Adds Start Menu and desktop shortcuts
+
+#### 🪟 Windows
+
+```powershell
+./build.bat
+```
+
+> This script:
+> * Cleans previous build files
+> * Sets up a virtual environment and installs dependencies
+> * Builds a standalone `.exe` using PyInstaller
+> * Adds desktop and Start Menu shortcuts
+
+---
+
+## ▶️ Running GUI app without build
 
 ```bash
 git clone https://github.com/niwciu/ModbusSniffer.git
 cd ModbusSniffer
 ```
-## 3. Create and Activate Virtual Environment
 
-### Linux / macOS
+### 1. Create and Activate Virtual Environment
 
+#### 🐧 Linux
 ```bash
-python3 -m venv .venv         # create venv
-source .venv/bin/activate     # activate             
+python3 -m venv .venv
+source .venv/bin/activate
 ```
 
-### Windows (PowerShell)
-
+#### 🪟 Windows (PowerShell)
 ```powershell
-python -m venv .venv               # create venv
-.\.venv\Scripts\Activate.ps1       # activate
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 ```
 
-## 4. Install Dependencies
+### 2. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## 5.Run GUI app
+### 3. Run GUI app
 
 ```bash
 python3 modbus_sniffer_GUI.py
 ```
 
-## 6. Deactivate Virtual Environment
+### 4. Deactivate Virtual Environment
+
 ```bash
-deactivate 
+deactivate
 ```
 
-# 🎮 CLI app Usage
+---
 
-## 1. Clone the Repository
+## 🎮 CLI app Usage
 
 ```bash
 git clone https://github.com/niwciu/ModbusSniffer.git
 cd ModbusSniffer
 ```
 
-## 2. Detail information aout usage of CLI version
-
+### CLI Help
 
 ```bash
 python3 modbus_sniffer.py -h
 ```
-## 3. Example of usage - running sniffer on port USB0 with baudrate 115200 and no parity
+
+### Example
 
 ```bash
 python3 modbus_sniffer.py -p /dev/ttyUSB0 -b 115200 -r none
 ```
 
+---
+
+## 🆕 What’s New
+
+See the full [CHANGELOG.md](CHANGELOG.md) for details.
 
 ---
 
-# 🆕 What’s New
+## 🔧 ToDo
 
-For the full changelog, including detailed descriptions of all updates, please refer to the [CHANGELOG.md](CHANGELOG.md).
-
----
-
-# 🔧 ToDo
-
-- Integrate CSV logging with new modbus parser
+- Integrate CSV logging with new Modbus parser
 - Improve GUI with:
-    - Add frame filters
+  - Add frame filtering
+  - Integrate CSV logger functionality with GUI
 
-# 📚 Documentation & Support
+## 📚 Documentation & Support
 
-* Detailed documentation will be available in the `docs/` folder soon.
-* Questions or issues? Open an issue in GitHub or contact the maintainers.
+- Detailed documentation will be available in the `docs/` folder soon.
+- Questions or issues? Open an [issue](https://github.com/niwciu/ModbusSniffer/issues) or join the [Discussions](https://github.com/niwciu/ModbusSniffer/discussions).
 
 ---
 
-# 🤝 Contributing
+## 🤝 Contributing
 
-Contributions are welcome! Please fork the repo and submit a pull request:
+Contributions are welcome!
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature-name`)
@@ -221,24 +192,19 @@ Contributions are welcome! Please fork the repo and submit a pull request:
 
 ---
 
-# 📜 License
+## 📜 License
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file.
 
-This project is a fork of [BADAndrea ModbusSniffer](https://github.com/BADAndrea/ModbusSniffer)
-
+This project is a fork of [BADAndrea ModbusSniffer](https://github.com/BADAndrea/ModbusSniffer)  
 Fork maintained by **niwciu** with enhancements described above.
 
 ---
 
 ❤️ Thank you for using this version of ModbusSniffer!
 
-</br></br>
 <div align="center">
-
 ***
-
-![myEmbeddedWayBanerWhiteSmaller](https://github.com/user-attachments/assets/f4825882-e285-4e02-a75c-68fc86ff5716)
+<img src="https://github.com/user-attachments/assets/f4825882-e285-4e02-a75c-68fc86ff5716" alt="myEmbeddedWayBanerWhiteSmaller"/>
 ***
 </div>
-
