@@ -12,13 +12,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libegl1 xvfb
 
     - uses: actions/setup-python@v4
       with:
         python-version: '3.12.3'
 
-    - name: Install dependencies
+    - name: Install Python dependencies
       run: |
         python -m venv .venv
         .venv/bin/pip install --upgrade pip
@@ -28,6 +33,6 @@ jobs:
       run: |
         .venv/bin/flake8 src/modbus_sniffer
 
-    - name: Run tests
+    - name: Run tests with xvfb
       run: |
-        .venv/bin/pytest --cov=src/modbus_sniffer tests/
+        xvfb-run .venv/bin/pytest --cov=src/modbus_sniffer tests/
