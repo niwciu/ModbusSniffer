@@ -1,6 +1,9 @@
-build/
+__pycache__/
+*.pyc
+*.log
 dist/
-log*
-*.spec
-__pycache__
-.venv
+build/
+*.egg-info/
+.venv/
+logs/
+.coverage

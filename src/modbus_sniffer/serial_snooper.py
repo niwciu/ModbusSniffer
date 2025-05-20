@@ -1,7 +1,7 @@
-
 import serial
-from modules.modbus_parser_new import ModbusParser 
-from modules.csv_logger import CSVLogger
+from modbus_sniffer.modbus_parser_new import ModbusParser
+from modbus_sniffer.csv_logger import CSVLogger
+
 
 class SerialSnooper:
     def __init__(
@@ -13,9 +13,9 @@ class SerialSnooper:
         timeout=100,
         raw_log=False,
         raw_only=False,
-        csv_log=False,         
-        daily_file=False,     
-        data_handler=None
+        csv_log=False,
+        daily_file=False,
+        data_handler=None,
     ):
         self.port = port
         self.baud = baud
@@ -27,12 +27,16 @@ class SerialSnooper:
         self.data_handler = data_handler
 
         # Our new CSV logger (if requested)
-        self.csv_logger = CSVLogger(
-            enable_csv=csv_log,
-            daily_file=daily_file,
-            output_dir="./logs", 
-            base_filename="log"
-        ) if csv_log else None
+        self.csv_logger = (
+            CSVLogger(
+                enable_csv=csv_log,
+                daily_file=daily_file,
+                output_dir="./csv_logs",
+                base_filename="log",
+            )
+            if csv_log
+            else None
+        )
 
         self.log.info(
             "Opening serial interface: \n"
@@ -49,7 +53,7 @@ class SerialSnooper:
             bytesize=serial.EIGHTBITS,
             parity=parity,
             stopbits=serial.STOPBITS_ONE,
-            timeout=timeout, 
+            timeout=timeout,
         )
         self.log.debug(self.connection)
 
@@ -87,23 +91,30 @@ class SerialSnooper:
         """
         if self.raw_only and data:
             # If the user wants to log raw, produce a hex representation
-            raw_message = ' '.join(f"{byte:02x}" for byte in data)
+            raw_message = " ".join(f"{byte:02x}" for byte in data)
             self.log.info(f"Raw RS485 data: {raw_message}")
             return  # skip decode entirely
 
         if len(data) <= 0:
             # Check if we have something that might form a valid modbus frame
             if len(self.data) > 2:
-                modbus_parser = ModbusParser(self.log, self.csv_logger,self.raw_log, self.trashdata,  on_parsed=self.emit_parsed_data )
+                modbus_parser = ModbusParser(
+                    self.log,
+                    self.csv_logger,
+                    self.raw_log,
+                    self.trashdata,
+                    on_parsed=self.emit_parsed_data,
+                )
                 self.data = modbus_parser.decodeModbus(self.data)
             return
 
         # Otherwise, accumulate and decode as normal
         for dat in data:
             self.data.append(dat)
-    
+
     def emit_parsed_data(self, parsed_data):
         self.log.debug(f"Parsed data ready: {parsed_data}")
-        # self.parsed_data_signal.emit(parsed_data) — nie masz tu jeszcze sygnału, ale...
+        # self.parsed_data_signal.emit(parsed_data) — nie masz tu jeszcze
+        # sygnału, ale...
         if self.data_handler:
             self.data_handler(parsed_data)
