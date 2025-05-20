@@ -17,7 +17,20 @@ jobs:
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y libegl1 xvfb libgl1 libxrender1 libxext6 libxrandr2 libxi6 libfontconfig1
+        sudo apt-get install -y \
+          libegl1-mesa \
+          libgl1-mesa-glx \
+          libgl1-mesa-dri \
+          xvfb \
+          libxrender1 \
+          libxext6 \
+          libxrandr2 \
+          libxi6 \
+          libfontconfig1 \
+          libxcb-glx0 \
+          libxcb-render0 \
+          libxcb-shape0 \
+          libxcb-xfixes0
 
     - uses: actions/setup-python@v4
       with:
@@ -37,4 +50,5 @@ jobs:
       uses: GabrielBB/xvfb-action@v1
       with:
         run: .venv/bin/pytest --cov=src/modbus_sniffer tests/
-
+      env:
+        QT_QPA_PLATFORM: offscreen
