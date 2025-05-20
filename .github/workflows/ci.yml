@@ -17,8 +17,14 @@ jobs:
         python-version: '3.10'
     - name: Install dependencies
       run: |
+        python3 -m venv .venv
+        source .venv/bin/activate 
         pip install -e .[dev]
     - name: Lint
-      run: flake8 ./src/modbus_sniffer
+      run: | 
+        source .venv/bin/activate 
+        flake8 ./src/modbus_sniffer
     - name: Run tests
-      run: pytest ./src
+      run: |
+        source .venv/bin/activate 
+        pytest ./src
