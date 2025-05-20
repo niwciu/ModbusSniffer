@@ -3,10 +3,10 @@ setlocal enabledelayedexpansion
 
 REM === Configuration ===
 set APP_NAME=ModbusSniffer
-set MAIN_PY=modbus_sniffer_GUI.py
-set ICON=images\icon.ico
+set MAIN_PY=..\src\modbus_sniffer_GUI.py
+set ICON=..\images\icon.ico
 set DIST_DIR=dist
-set VENV_DIR=.venv
+set VENV_DIR=..\.venv
 
 REM Shortcut paths
 set DESKTOP_LINK=%USERPROFILE%\Desktop\%APP_NAME%.lnk
