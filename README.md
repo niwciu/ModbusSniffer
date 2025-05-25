@@ -99,13 +99,52 @@ sudo chmod +x build.sh
 ---
 
 ## ▶️ Running GUI app without build
+### 1. Clone repository
 
 ```bash
 git clone https://github.com/niwciu/ModbusSniffer.git
 cd ModbusSniffer
 ```
 
-### 1. Create and Activate Virtual Environment
+### 2. Create and Activate Virtual Environment
+#### 🐧 Linux
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+#### 🪟 Windows (PowerShell)
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
+
+### 3. Install package and development tools
+
+```bash
+pip install -e .[dev]
+```
+
+### 4. Run GUI app 🎛️ 🧩
+```bash
+modbus-sniffer-gui
+```
+> Note: virtual environment (.venv) must be active
+
+### 5. Deactivate Virtual Environment
+```bash
+deactivate
+```
+
+---
+
+## 🎮 CLI app Usage
+### 1. Clone repository
+```bash
+git clone https://github.com/niwciu/ModbusSniffer.git
+cd ModbusSniffer
+```
+### 2. Create and Activate Virtual Environment
 
 #### 🐧 Linux
 ```bash
@@ -119,17 +158,25 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
-### 2. Install Dependencies
+### 3. Install package and development tools
 
 ```bash
-pip install -r requirements.txt
+pip install -e .[dev]
 ```
 
-### 3. Run GUI app
+### 3. Run CLI Help 🖥️ 
 
 ```bash
-python3 modbus_sniffer_GUI.py
+modbus-sniffer -h
 ```
+> Note: virtual environment (.venv) must be active.
+
+### 4. Example of usage 🧪
+Run modbus-sniffer CLI app on port USB0 with baud 115200 and parity=none
+```bash
+modbus-sniffer -p /dev/ttyUSB0 -b 115200 -r none
+```
+> Note: virtual environment (.venv) must be active.
 
 ### 4. Deactivate Virtual Environment
 
@@ -137,26 +184,8 @@ python3 modbus_sniffer_GUI.py
 deactivate
 ```
 
----
 
-## 🎮 CLI app Usage
 
-```bash
-git clone https://github.com/niwciu/ModbusSniffer.git
-cd ModbusSniffer
-```
-
-### CLI Help
-
-```bash
-python3 modbus_sniffer.py -h
-```
-
-### Example
-
-```bash
-python3 modbus_sniffer.py -p /dev/ttyUSB0 -b 115200 -r none
-```
 
 ---
 
@@ -204,7 +233,9 @@ Fork maintained by **niwciu** with enhancements described above.
 ❤️ Thank you for using this version of ModbusSniffer!
 
 <div align="center">
+
 ***
 <img src="https://github.com/user-attachments/assets/f4825882-e285-4e02-a75c-68fc86ff5716" alt="myEmbeddedWayBanerWhiteSmaller"/>
+
 ***
 </div>
