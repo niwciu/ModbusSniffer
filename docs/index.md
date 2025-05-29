@@ -7,8 +7,8 @@
 <table style="width: 100%; border: none; align:center">
 <tr>
   </td>
-    <td style="width: 140px; vertical-align: top;">
-    <img src="../images/icon-4.png" alt="ModbusSniffer logo">
+    <td style="width: 160px; vertical-align: top;">
+    <img src="./img/icon-4.png" alt="ModbusSniffer logo">
   </td>
   <td style="vertical-align: top;">
     <strong>ModbusSniffer</strong> is a lightweight, cross-platform desktop application for monitoring Modbus RTU communication via serial ports.<br><br>
@@ -25,17 +25,15 @@
 ## 🚀 Key Features
 
 - ✅ Real-time Modbus RTU frame capturing
+- ✅ Live Frame table view
 - ✅ Friendly graphical interface (PyQt6)
 - ✅ Message decoding with function and address information
 - ✅ Filtering, sorting and searching captured data
-- ✅ Exporting logs to CSV
-
-- 🧰 Sniffs raw Modbus RTU frames from serial ports (RS-485, USB)
-- 🖥️ GUI interface built with PyQt6
-- 📋 Frame table: Real-time decoded Modbus traffic
-- 🌈 Color-coded logging of request–response frames
-- 🪟 Cross-platform: Windows & Linux
-- 🆓 MIT licensed, open-source
+- ✅ Exporting logs to txt and CSV
+- ✅ Sniffs raw Modbus RTU frames from serial ports (RS-485, USB)
+- ✅ Color-coded logging of request–response frames in terminal view
+- ✅ Cross-platform: Windows & Linux
+- ✅ MIT licensed, open-source
 
 ---
 
@@ -48,7 +46,8 @@ pip install modbus-sniffer
 ```
 or download Binary files for Ubuntu and Windows from [here](https://github.com/niwciu/ModbusSniffer/releases).
 
-You can also build and install app from sourcess. [Click here](CONTRIBUTING.md#%EF%B8%8F-build--install) for deatails about it.
+You can also build and install app from sourcess. [Click here](https://github.com/niwciu/ModbusSniffer/blob/main/CONTRIBUTING.md#%EF%B8%8F-build--install)
+ for deatails about it.
 
 
 
@@ -94,7 +93,7 @@ MIT Licensed. Created by [niwciu](https://github.com/niwciu).
 
 ## ▶️ Usage
 
-### 🎛️ Run GUI:
+### 🎛️ Run GUI from bash:
 
 ```bash
 modbus-sniffer-gui
@@ -119,13 +118,19 @@ For more usage options, development guide, and installation from source, visit t
 ---
 ## 🤝 Contributing
 
-Please see [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and contribution guidelines.
+Please see [CONTRIBUTING.md](https://github.com/niwciu/ModbusSniffer/blob/main/CONTRIBUTING.md)
+ for development setup and contribution guidelines.
 
 ---
 
 ## 📜 License
 
-MIT License — see the [LICENSE](LICENSE) file for details.  
+MIT License — see the [LICENSE](https://github.com/niwciu/ModbusSniffer/blob/main/LICENSE) file for details.  
 This project is a fork of [BADAndrea ModbusSniffer](https://github.com/BADAndrea/ModbusSniffer), maintained by **niwciu** with enhancements described above.
 
 ---
+
+<img src="https://github.com/user-attachments/assets/f4825882-e285-4e02-a75c-68fc86ff5716" alt="myEmbeddedWayBanerWhiteSmaller"/>
+
+***
+</div>

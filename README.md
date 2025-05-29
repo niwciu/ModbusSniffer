@@ -74,4 +74,9 @@ Please see [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and contribu
 MIT License — see the [LICENSE](LICENSE) file for details.  
 This project is a fork of [BADAndrea ModbusSniffer](https://github.com/BADAndrea/ModbusSniffer), maintained by **niwciu** with enhancements described above.
 
----
+
+***
+<img src="https://github.com/user-attachments/assets/f4825882-e285-4e02-a75c-68fc86ff5716" alt="myEmbeddedWayBanerWhiteSmaller"/>
+
+***
+</div>
