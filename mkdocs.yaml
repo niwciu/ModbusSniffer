@@ -6,8 +6,8 @@ repo_url: https://github.com/niwciu/ModbusSniffer
 theme:
   name: material
   language: en
-  logo: img/icon4.png
-  favicon: img/icon4.png
+  logo: img/icon-4.png
+  favicon: img/icon-4.png
   features:
     - navigation.instant
     - navigation.top

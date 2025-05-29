@@ -44,3 +44,11 @@ This project is a fork of [BADAndrea ModbusSniffer](https://github.com/BADAndrea
 - 🔄 CLI → GUI: All command-line functionality integrated into the GUI
 - 📋 Frame Table: Real-time view of the latest captured frames
 - 🌈 Live Logging: Color-coded request–response pairs; unmatched requests highlighted in red
+
+<div align="center">
+
+---
+<img src="https://github.com/user-attachments/assets/f4825882-e285-4e02-a75c-68fc86ff5716" alt="myEmbeddedWayBanerWhiteSmaller"/>
+
+---
+</div>

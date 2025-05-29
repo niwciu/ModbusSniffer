@@ -1,23 +1,28 @@
-
 # ModbusSniffer
 
-
-
-
-<table style="width: 100%; border: none; align:center">
-<tr>
-  </td>
+<table style="width: 100%; border: none;">
+  <tr>
     <td style="width: 160px; vertical-align: top;">
-    <img src="./img/icon-4.png" alt="ModbusSniffer logo">
-  </td>
-  <td style="vertical-align: top;">
-    <strong>ModbusSniffer</strong> is a lightweight, cross-platform desktop application for monitoring Modbus RTU communication via serial ports.<br><br>
-    Designed for engineers, technicians, and automation developers, it simplifies troubleshooting by showing decoded Modbus traffic in real-time.
-
-</tr>
+      <img src="./img/icon-4.png" alt="ModbusSniffer logo">
+    </td>
+    <td style="vertical-align: top; font-size: 0.9rem; font-family: system-ui, sans-serif; position: relative;">
+      <div style="margin-bottom: 1.5em;">
+        <strong>ModbusSniffer</strong> is a lightweight, cross-platform desktop application for monitoring Modbus RTU communication via serial ports in real-time.<br><br>
+        Designed for engineers, technicians, and automation developers, it simplifies troubleshooting by capturing showing decoded Modbus traffic in real-time.
+      </div>
+      <div style="text-align: right;">
+        <a href="https://github.com/niwciu/ModbusSniffer/releases">
+          <img src="https://img.shields.io/badge/Download-EXE-blue?style=for-the-badge&logo=python" alt="Download ModbusSniffer">
+        </a>
+      </div>
+    </td>
+  </tr>
 </table>
+
+
 <div align="center">
-<img src="https://github.com/niwciu/ModbusSniffer/blob/main/doc/gui.gif?raw=true" alt="Demo" />
+  <img src="https://github.com/niwciu/ModbusSniffer/blob/main/doc/gui.gif?raw=true" alt="ModbusSniffer GUI demo" />
+  <p><em>Live preview of ModbusSniffer GUI in action</em></p>
 </div>
 
 ---
@@ -39,46 +44,73 @@
 
 ## 📦 Download & Installation
 
-Install directly from PyPI:
 
-```bash
-pip install modbus-sniffer
-```
-or download Binary files for Ubuntu and Windows from [here](https://github.com/niwciu/ModbusSniffer/releases).
+Download binary files for Ubuntu and Windows from [GitHub Releases](https://github.com/niwciu/ModbusSniffer/releases).
 
-You can also build and install app from sourcess. [Click here](https://github.com/niwciu/ModbusSniffer/blob/main/CONTRIBUTING.md#%EF%B8%8F-build--install)
- for deatails about it.
-
-
+You can also install directly from pip or build and install the app from sources. [Click here](CONTRIBUTING.md#build--install) for details.
 
 ---
 
 ## 🖥️ User Interface Overview
 
-- **Top Toolbar**: Connect, Start/Stop Sniffing, Export Logs
-- **Main Table View**: Real-time display of Modbus requests and responses
-- **Filters Panel**: Filter by device ID, function code, or address
+The graphical interface of ModbusSniffer is designed for clarity and usability. It consists of:
+
+- **Top Toolbar**  
+  Controls for connecting to a serial port, starting/stopping sniffing, and additional options such as logging to file or exporting logs to CSV.
+
+- **Main Display Area**  
+  Two switchable views:
+  - **Table View**: Displays Modbus requests and responses in real time, with sortable columns.
+  - **Console View**: A terminal-like display with color-coded request–response pairs, useful for quick scanning and debugging.
+
+- **Filters Panel**  
+  Allows filtering captured traffic by device ID, function code, or register address to focus on specific devices or operations (currently under development).
+
 
 ---
 
 ## 📚 How It Works
 
-ModbusSniffer opens a serial port and listens for Modbus RTU traffic. It parses each Modbus frame and displays it in a structured table.
+ModbusSniffer opens a serial port and passively listens to the incoming data stream. It continuously scans the raw byte stream for valid Modbus RTU frames using protocol-specific timing and structure rules.
 
-> ℹ️ Tip: Use a USB Modbus sniffer cable or RS485 tap to capture traffic without interfering with the bus.
+Each detected frame is decoded to extract key information such as device address, function code, and data content.
+
+Depending on the selected mode and view:
+
+- In the GUI, frames can be:
+
+  - displayed in a real-time tabular view with sorting and filtering options, or
+
+  - shown in a terminal-like log view where each request–response pair is grouped and color-coded. Alternating colors help visually separate transactions, and invalid or unanswered frames are highlighted in red.
+
+- In the CLI, frames are printed line-by-line to standard output. The format and verbosity of output depend on command-line flags passed by the user.
+
+> ℹ️ Tip: For safe, non-intrusive monitoring of Modbus RTU traffic, use a passive RS-485 tap or a USB-to-RS485 adapter configured to listen-only. This allows ModbusSniffer to capture data without sending or disturbing any signals on the bus.
 
 ---
 
 ## ❓ FAQ
 
-**Q: Can I use it with USB-to-RS485 converters?**  
-Yes! As long as the converter exposes a COM port, it works out of the box.
+**Q: Can I use ModbusSniffer with USB-to-RS485 converters?**  
+Yes! ModbusSniffer works out of the box with any USB-to-RS485 converter that exposes a standard COM port.
 
-**Q: Is it safe to use on a live bus?**  
-Yes — it is passive. It does not transmit any data.
+**Q: Is it safe to use ModbusSniffer on a live Modbus bus?**  
+Absolutely. The application is passive — it only listens and does not transmit any data, so it won’t interfere with normal communication.
 
-**Q: Can I decode custom Modbus function codes?**  
-Not yet — support for custom decoding is planned in a future release.
+**Q: Can I decode custom or proprietary Modbus function codes?**  
+Not yet. Support for custom function code decoding is planned for a future release.
+
+**Q: How can I run ModbusSniffer?**  
+The easiest way is to download the pre-built binaries from the [releases page](https://github.com/niwciu/ModbusSniffer/releases) run the app.  
+You can also install it via PyPI.
+Alternatively, You can clone the repository and run the script manually or run build&install script inside the repo.  
+For quick guide look at [▶️ Usage](#️-usage) section.  
+For more information albut build & install can be found [here](CONTRIBUTING.md#️-build--install)
+
+**Q: Is there an installer that adds ModbusSniffer to system programs with shortcuts and icons?**  
+No, there is no official installer package. However, by following the instructions in the CONTRIBUTING.md file under the Build & Install section, you can clone the repository and run the build script. This script compiles the application from source, creates binaries, and adds shortcuts to the system pointing to the built binaries.
+
+> ⚠️ Important: The build script generates binaries inside the project folder and creates shortcuts referencing those binaries. It does not modify system files. Therefore, do not delete the binary folder after installation, or shortcuts will stop working.  
 
 ---
 
@@ -88,40 +120,53 @@ If you find a bug or have suggestions, [open an issue on GitHub](https://github.
 
 MIT Licensed. Created by [niwciu](https://github.com/niwciu).
 
-
-
+---
 
 ## ▶️ Usage
 
-### 🎛️ Run GUI from bash:
+### 🎛️ Running the GUI
 
+**If using a binary (downloaded or built):**  
+Just run the app like any other executable — no terminal required.
+
+**If installed via pip:**  
 ```bash
 modbus-sniffer-gui
 ```
 
-### 🖥️ Run CLI:
-To list all options:
+**If running directly from the cloned repository:**  
+Navigate to the source folder and run the GUI script:
+```bash
+cd src/modbus_sniffer
+python gui.py
+```
+
+---
+
+### 🖥️ Running the CLI
+
+To see all available options:
 ```bash
 modbus-sniffer -h
 ```
 
-
-Example of runnig sniffer on ttyUSB0 with baud 115200 and no parity:
+Example: Running the sniffer on `/dev/ttyUSB0` with baud rate `115200` and no parity:
 ```bash
 modbus-sniffer -p /dev/ttyUSB0 -b 115200 -r none
 ```
 
-For more usage options, development guide, and installation from source, visit the GitHub repository:
+For more usage examples, development guide, and instructions for building from source, visit:
 
-👉 [ModbusSniffer on GitHub](https://github.com/niwciu/ModbusSniffer)
+👉 [ModbusSniffer on GitHub](https://github.com/niwciu/ModbusSniffer)  
+👉 [CONTRIBUTING.md](CONTRIBUTING.md)
 
----
 ## 🤝 Contributing
 
-Please see [CONTRIBUTING.md](https://github.com/niwciu/ModbusSniffer/blob/main/CONTRIBUTING.md)
- for development setup and contribution guidelines.
+We welcome contributions!
 
----
+If you'd like to improve this project, fix bugs, or add features, check out the development guide:
+
+📄 [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## 📜 License
 
@@ -130,7 +175,8 @@ This project is a fork of [BADAndrea ModbusSniffer](https://github.com/BADAndrea
 
 ---
 
-<img src="https://github.com/user-attachments/assets/f4825882-e285-4e02-a75c-68fc86ff5716" alt="myEmbeddedWayBanerWhiteSmaller"/>
-
-***
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/f4825882-e285-4e02-a75c-68fc86ff5716" alt="myEmbeddedWayBanerWhiteSmaller"/>
 </div>
+
+--- 

@@ -64,7 +64,7 @@ python -m ensurepip --upgrade
 
 ```bash
 git clone https://github.com/niwciu/ModbusSniffer.git
-cd ModbusSniffer
+cd ModbusSniffer/install_scripts
 ```
 
 ### 3. Build Executable (for Ubuntu and Windows)
@@ -98,7 +98,7 @@ sudo chmod +x build.sh
 
 ---
 
-## ▶️ Running GUI app without build
+## ▶️ Running GUI App (installed via pip)
 ### 1. Clone repository
 
 ```bash
@@ -138,7 +138,7 @@ deactivate
 
 ---
 
-## 🎮 CLI app Usage
+## 🎮 Running the CLI App (installed via pip)
 ### 1. Clone repository
 ```bash
 git clone https://github.com/niwciu/ModbusSniffer.git
@@ -184,8 +184,94 @@ modbus-sniffer -p /dev/ttyUSB0 -b 115200 -r none
 deactivate
 ```
 
+## ▶️ Running GUI App without installation
+### 1. Clone repository
 
+```bash
+git clone https://github.com/niwciu/ModbusSniffer.git
+cd ModbusSniffer
+```
 
+### 2. Create and Activate Virtual Environment
+#### 🐧 Linux
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+#### 🪟 Windows (PowerShell)
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
+
+### 3. Install requirements
+
+```bash
+pip install -r ./install_scripts/requirements.txt
+```
+
+### 4. Run GUI app 🎛️ 🧩
+```bash
+cd src/modbus_sniffer
+python gui.py
+```
+> Note: virtual environment (.venv) must be active
+
+### 5. Deactivate Virtual Environment
+```bash
+deactivate
+```
+
+---
+
+## 🎮 Running the CLI App without installation
+### 1. Clone repository
+```bash
+git clone https://github.com/niwciu/ModbusSniffer.git
+cd ModbusSniffer
+```
+### 2. Create and Activate Virtual Environment
+
+#### 🐧 Linux
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+#### 🪟 Windows (PowerShell)
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
+
+### 3. Install requirements
+
+```bash
+pip install -r ./install_scripts/requirements.txt
+```
+
+### 3. Run CLI Help 🖥️ 
+
+```bash
+cd src/modbus_sniffer
+python cli.py -h
+```
+> Note: virtual environment (.venv) must be active.
+
+### 4. Example of usage 🧪
+Run modbus-sniffer CLI app on port USB0 with baud 115200 and parity=none
+```bash
+cd src/modbus_sniffer #optional - if running from project main folder
+python cli.py -p /dev/ttyUSB0 -b 115200 -r none
+```
+> Note: virtual environment (.venv) must be active.
+
+### 4. Deactivate Virtual Environment
+
+```bash
+deactivate
+```
 
 ---
 
@@ -196,11 +282,10 @@ See the full [CHANGELOG.md](CHANGELOG.md) for details.
 ---
 
 ## 🔧 ToDo
-
-- Integrate CSV logging with new Modbus parser
 - Improve GUI with:
   - Add frame filtering
-  - Integrate CSV logger functionality with GUI
+- Add posibility to set log files path 
+
 
 ## 📚 Documentation & Support
 
@@ -213,11 +298,18 @@ See the full [CHANGELOG.md](CHANGELOG.md) for details.
 
 Contributions are welcome!
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature-name`)
-3. Commit your changes (`git commit -m "Add feature"`)
-4. Push to branch (`git push origin feature-name`)
-5. Open a Pull Request
+1. Fork the repository  
+2. Create your feature branch (`git checkout -b feature-name`)  
+3. Commit your changes (`git commit -m "Add feature"`)  
+4. Push to branch (`git push origin feature-name`)  
+5. Open a Pull Request  
+
+After cloning the repository and setting up a virtual environment, you can install all development tools (used in CI/CD pipeline and for local testing, linting, and packaging) with:
+
+```bash
+pip install -e .[dev]
+```
+This includes formatters, linters, type checkers, test runners, and build tools.
 
 ---
 
@@ -234,8 +326,8 @@ Fork maintained by **niwciu** with enhancements described above.
 
 <div align="center">
 
-***
+---
 <img src="https://github.com/user-attachments/assets/f4825882-e285-4e02-a75c-68fc86ff5716" alt="myEmbeddedWayBanerWhiteSmaller"/>
 
-***
+---
 </div>
