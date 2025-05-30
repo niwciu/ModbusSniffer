@@ -8,7 +8,7 @@ Easily analyze and debug communication between PLCs, HMIs, and other Modbus RTU 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 <div align="center">
-<img src="https://github.com/niwciu/ModbusSniffer/blob/main/doc/gui.gif?raw=true" alt="Demo" />
+<img src="https://niwciu.github.io/ModbusSniffer/gui.gif" alt="Demo" />
 </div>
 
 ---
@@ -75,8 +75,10 @@ MIT License — see the [LICENSE](LICENSE) file for details.
 This project is a fork of [BADAndrea ModbusSniffer](https://github.com/BADAndrea/ModbusSniffer), maintained by **niwciu** with enhancements described above.
 
 
-***
+<div align="center">
+
+---
 <img src="https://github.com/user-attachments/assets/f4825882-e285-4e02-a75c-68fc86ff5716" alt="myEmbeddedWayBanerWhiteSmaller"/>
 
-***
+---
 </div>
