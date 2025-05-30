@@ -24,8 +24,9 @@ jobs:
           source venv/bin/activate
           pip install -r install_scripts/requirements.txt
           pip install pyinstaller
-          pyinstaller --onefile --name "ModbusSniffer" src/modbus_sniffer/gui.py
-          chmod +x dist/ModbusSniffer
+          cd src/modbus_sniffer
+          pyinstaller --onefile --name "ModbusSniffer" gui.py
+          chmod +x ../../dist/ModbusSniffer
           
           # Tworzenie archiwum
           mkdir -p release
@@ -58,6 +59,7 @@ jobs:
           .\venv\Scripts\activate
           pip install -r install_scripts/requirements.txt
           pip install pyinstaller
+          cd src/modbus_sniffer
           pyinstaller --onefile --noconsole --name "ModbusSniffer.exe" --icon="./images/icon.ico" src/modbus_sniffer/gui.py
 
       - name: Upload Windows artifact
