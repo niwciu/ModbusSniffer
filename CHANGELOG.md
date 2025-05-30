@@ -1,4 +1,33 @@
 # Changelog
+
+# v1.0.3 – What’s Changed 🚀
+
+## ⚙️ CI/CD Improvements
+- 🛠️ Added new GitHub Actions workflows:
+  - **deploy_static.yml** for auto-publishing the documentation site  
+  - **ci.yml** steps running smoke-tests on every push/pr with additional manual trigger
+
+## 📦 PyPI Deployment & Project Restructure
+- 📂 Reorganized project into **src/** layout and added **pyproject.toml** per Python Packaging User Guide  
+- 🧪 Introduced comprehensive test suite covering core functionality  
+- 🏷️ Prepared metadata and packaging config for first PyPI release
+
+## 📚 Documentation
+- 📁 Split docs into a dedicated **docs/** folder (MkDocs config) and added **CONTRIBUTING.md**  
+- 🌐 Added GitHub Pages deployment instructions and static-site build scripts 
+
+## 🛠️ Installation Scripts
+- 📦 Moved all installers into **install_scripts/**:
+  - Updated Windows `.bat` and Unix `.sh` scripts with improved error handling  
+  - Unified install paths and environment-setup steps 
+
+## 📈 CSV Logger Integration
+- 📝 Implemented **csv_logger** module to export captured frames and events to CSV witn hew parser (was a TODO in previous release)  
+- 🔄 CSV logging can now be enabled via CLI/GUI flags for post-processing and analytics 
+
+**Full Changelog**: https://github.com/niwciu/ModbusSniffer/compare/v1.0.2...v1.0.3
+
+
 # v1.0.2 –  What's Changed 🚀
 
 ## 📦 Build System
@@ -18,6 +47,7 @@
 **Full Changelog**: https://github.com/niwciu/ModbusSniffer/compare/v1.0.1...v1.0.2
 
 </br></br>
+
 # v1.0.1 – What's Changed 🚀
 
 ## 🖥️ GUI Improvements
@@ -44,3 +74,11 @@ This project is a fork of [BADAndrea ModbusSniffer](https://github.com/BADAndrea
 - 🔄 CLI → GUI: All command-line functionality integrated into the GUI
 - 📋 Frame Table: Real-time view of the latest captured frames
 - 🌈 Live Logging: Color-coded request–response pairs; unmatched requests highlighted in red
+
+<div align="center">
+
+---
+<img src="https://github.com/user-attachments/assets/f4825882-e285-4e02-a75c-68fc86ff5716" alt="myEmbeddedWayBanerWhiteSmaller"/>
+
+---
+</div>

@@ -2,8 +2,15 @@ import os
 import csv
 from datetime import datetime
 
+
 class CSVLogger:
-    def __init__(self, enable_csv=False, daily_file=False, output_dir=".", base_filename="modbus_data"):
+    def __init__(
+        self,
+        enable_csv=False,
+        daily_file=False,
+        output_dir=".",
+        base_filename="modbus_data",
+    ):
         self.enable_csv = enable_csv
         self.daily_file = daily_file
         self.output_dir = output_dir
@@ -97,7 +104,9 @@ class CSVLogger:
         self.csv_file = open(old_path, mode="a", newline="", encoding="utf-8")
         self.csv_writer = csv.writer(self.csv_file)
 
-    def log_data(self, timestamp, slave_id, operation, start_register, quantity, register_values):
+    def log_data(
+        self, timestamp, slave_id, operation, start_register, quantity, register_values
+    ):
         if not self.enable_csv:
             return
 

@@ -1,0 +1,57 @@
+[project]
+name = "modbus-sniffer"
+version = "0.1.0"
+description = "Sniffer for Modbus RTU traffic with CLI and GUI"
+readme = "README.md"
+license = "MIT"
+authors = [{ name = "niwciu", email = "niwciu@gmail.com" }]
+dependencies = [
+  "pyserial",
+  "PyQt6",
+  "rich"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "pytest-cov",
+  "pytest-qt",
+  "flake8",
+  "black"
+]
+
+[project.scripts]
+modbus-sniffer = "modbus_sniffer.cli:main"
+modbus-sniffer-gui = "modbus_sniffer.gui:main"
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.black]
+line-length = 150
+target-version = ["py312"]
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | build
+  | dist
+  | __pycache__
+)/
+'''
+
+[tool.flake8]
+max-line-length = 150
+extend-ignore = ["E203", "W503"]
+exclude = [".venv", "build", "dist", "__pycache__"]
+
+[tool.pytest.ini_options]
+addopts = "--cov=src --cov-report=term-missing"
+testpaths = ["tests"]

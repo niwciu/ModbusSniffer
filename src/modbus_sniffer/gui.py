@@ -1,50 +1,86 @@
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QComboBox, QCheckBox, QGroupBox, QPushButton, QTextEdit, QTabWidget, QTableWidget, QTableWidgetItem, QStyledItemDelegate, QHeaderView, QGridLayout
+from PyQt6.QtWidgets import (
+    QApplication,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QComboBox,
+    QCheckBox,
+    QGroupBox,
+    QPushButton,
+    QTextEdit,
+    QTabWidget,
+    QTableWidget,
+    QTableWidgetItem,
+    QStyledItemDelegate,
+    QHeaderView,
+)
 from PyQt6.QtGui import QFontMetrics
 from PyQt6.QtSerialPort import QSerialPortInfo
 import sys
-import platform 
-from modules.serial_snooper import SerialSnooper
-from modules.sniffer_utils import normalize_sniffer_config
-from modules.main_logger import configure_logging
+import platform
+from modbus_sniffer.serial_snooper import SerialSnooper
+from modbus_sniffer.sniffer_utils import normalize_sniffer_config
+from modbus_sniffer.main_logger import configure_logging
+
 
 class AutoResizeTable(QTableWidget):
     def __init__(self):
         super().__init__()
         self.setup_table()
-        
+
     def setup_table(self):
-        self.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
-        self.verticalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
-        
+        self.horizontalHeader().setSectionResizeMode(
+            QHeaderView.ResizeMode.ResizeToContents
+        )
+        self.verticalHeader().setSectionResizeMode(
+            QHeaderView.ResizeMode.ResizeToContents
+        )
+
         # Resize the column after addind data to table
         self.model().dataChanged.connect(self.resize_columns)
-        
+
     def resize_columns(self):
         self.resizeColumnsToContents()
         self.resizeRowsToContents()
-        
+
+
 class AdvancedAlignDelegate(QStyledItemDelegate):
     def __init__(self):
         super().__init__()
         self.column_alignments = {}
 
-    def set_column_alignment(self, col, horizontal, vertical=Qt.AlignmentFlag.AlignVCenter):
+    def set_column_alignment(
+        self, col, horizontal, vertical=Qt.AlignmentFlag.AlignVCenter
+    ):
         self.column_alignments[col] = (horizontal, vertical)
 
     def initStyleOption(self, option, index):
         super().initStyleOption(option, index)
-        
+
         if index.column() in self.column_alignments:
             h_align, v_align = self.column_alignments[index.column()]
-            option.displayAlignment = h_align | v_align 
+            option.displayAlignment = h_align | v_align
 
 
 class SnifferWorker(QThread):
     log_signal = pyqtSignal(str)
     parsed_data_signal = pyqtSignal(dict)
 
-    def __init__(self, port, baudrate, parity, timeout, csv_log, raw_log, raw_only, daily_file, log_to_file):
+    def __init__(
+        self,
+        port,
+        baudrate,
+        parity,
+        timeout,
+        csv_log,
+        raw_log,
+        raw_only,
+        daily_file,
+        log_to_file,
+    ):
         super().__init__()
         self.port = port
         self.baud = baudrate
@@ -56,11 +92,15 @@ class SnifferWorker(QThread):
         self.daily_file = daily_file
         self.log_to_file = log_to_file
         self.running = True
-        self.log = configure_logging(log_to_file=self.log_to_file, daily_file=daily_file, gui_callback=self.emit_log)
+        self.log = configure_logging(
+            log_to_file=self.log_to_file,
+            daily_file=daily_file,
+            gui_callback=self.emit_log,
+        )
 
     def emit_log(self, msg):
         self.log_signal.emit(msg)
-    
+
     def handle_parsed_data(self, data):
         self.parsed_data_signal.emit(data)
 
@@ -76,12 +116,12 @@ class SnifferWorker(QThread):
                 raw_only=self.raw_only,
                 csv_log=self.csv_log,
                 daily_file=self.daily_file,
-                data_handler=self.handle_parsed_data
+                data_handler=self.handle_parsed_data,
             ) as sniffer:
                 while self.running:
                     data = sniffer.read_raw()
-                    parsed_data = sniffer.process_data(data)
-                    
+                    sniffer.process_data(data)
+
         except Exception as e:
             self.log.error(f"Exception in sniffer: {str(e)}")
 
@@ -89,6 +129,7 @@ class SnifferWorker(QThread):
         self.running = False
         self.quit()
         self.wait()
+
 
 class GUIApp(QWidget):
     def __init__(self):
@@ -134,28 +175,45 @@ class GUIApp(QWidget):
             available_ports = QSerialPortInfo.availablePorts()
             for port in available_ports:
                 system_location = port.systemLocation()
-                if platform.system() == "Windows" and system_location.startswith('\\\\.\\'):
-                    clean_name = system_location.replace('\\\\.\\', '')
+                if platform.system() == "Windows" and system_location.startswith(
+                    "\\\\.\\"
+                ):
+                    clean_name = system_location.replace("\\\\.\\", "")
                 else:
                     clean_name = system_location
                 self.port_input.addItem(clean_name)
 
-        self.port_input.showPopup = lambda orig=self.port_input.showPopup: (refresh_serial_ports(), orig())[1]
+        self.port_input.showPopup = lambda orig=self.port_input.showPopup: (
+            refresh_serial_ports(),
+            orig(),
+        )[1]
 
-        self.settings_layout.addWidget(self.port_label, alignment=Qt.AlignmentFlag.AlignRight)
-        self.settings_layout.addWidget(self.port_input, alignment=Qt.AlignmentFlag.AlignLeft)
+        self.settings_layout.addWidget(
+            self.port_label, alignment=Qt.AlignmentFlag.AlignRight
+        )
+        self.settings_layout.addWidget(
+            self.port_input, alignment=Qt.AlignmentFlag.AlignLeft
+        )
 
         self.baudrate_label = QLabel("Baudrate:")
         self.baudrate_input = QComboBox()
         self.baudrate_input.addItems(["9600", "19200", "38400", "57600", "115200"])
-        self.settings_layout.addWidget(self.baudrate_label, alignment=Qt.AlignmentFlag.AlignRight)
-        self.settings_layout.addWidget(self.baudrate_input, alignment=Qt.AlignmentFlag.AlignLeft)
+        self.settings_layout.addWidget(
+            self.baudrate_label, alignment=Qt.AlignmentFlag.AlignRight
+        )
+        self.settings_layout.addWidget(
+            self.baudrate_input, alignment=Qt.AlignmentFlag.AlignLeft
+        )
 
         self.parity_label = QLabel("Parity:")
         self.parity_input = QComboBox()
         self.parity_input.addItems(["none", "even", "odd"])
-        self.settings_layout.addWidget(self.parity_label, alignment=Qt.AlignmentFlag.AlignRight)
-        self.settings_layout.addWidget(self.parity_input, alignment=Qt.AlignmentFlag.AlignLeft)
+        self.settings_layout.addWidget(
+            self.parity_label, alignment=Qt.AlignmentFlag.AlignRight
+        )
+        self.settings_layout.addWidget(
+            self.parity_input, alignment=Qt.AlignmentFlag.AlignLeft
+        )
 
         # ------- timeout_layout --------------------------------------
         self.timeout_layout = QHBoxLayout()
@@ -167,9 +225,15 @@ class GUIApp(QWidget):
         self.timeout_input.setMaxLength(5)
         self.timeout_input.setAlignment(Qt.AlignmentFlag.AlignRight)
 
-        self.timeout_layout.addWidget(self.timeout_label, alignment=Qt.AlignmentFlag.AlignLeft)
-        self.timeout_layout.addWidget(self.timeout_input,alignment=Qt.AlignmentFlag.AlignLeft)
-        self.timeout_layout.addWidget(self.timeout_unit_label,alignment=Qt.AlignmentFlag.AlignLeft)
+        self.timeout_layout.addWidget(
+            self.timeout_label, alignment=Qt.AlignmentFlag.AlignLeft
+        )
+        self.timeout_layout.addWidget(
+            self.timeout_input, alignment=Qt.AlignmentFlag.AlignLeft
+        )
+        self.timeout_layout.addWidget(
+            self.timeout_unit_label, alignment=Qt.AlignmentFlag.AlignLeft
+        )
 
         # ------- options_layout: checkbox ----------------------------
         self.options_layout = QHBoxLayout()
@@ -182,15 +246,24 @@ class GUIApp(QWidget):
         self.daily_file_checkbox = QCheckBox("Daily File Rotation")
 
         font_metrics = QFontMetrics(self.timeout_input.font())
-        char_width = font_metrics.horizontalAdvance('0')
+        char_width = font_metrics.horizontalAdvance("0")
         self.timeout_input.setFixedWidth(char_width * 5 + 10)
 
-        self.options_layout.addWidget(self.log_to_file_checkbox,alignment=Qt.AlignmentFlag.AlignLeft)
-        self.options_layout.addWidget(self.raw_checkbox,alignment=Qt.AlignmentFlag.AlignLeft)
-        self.options_layout.addWidget(self.raw_only_checkbox,alignment=Qt.AlignmentFlag.AlignLeft)
-        self.options_layout.addWidget(self.csv_checkbox,alignment=Qt.AlignmentFlag.AlignLeft)
-        self.options_layout.addWidget(self.daily_file_checkbox,alignment=Qt.AlignmentFlag.AlignLeft)
-
+        self.options_layout.addWidget(
+            self.log_to_file_checkbox, alignment=Qt.AlignmentFlag.AlignLeft
+        )
+        self.options_layout.addWidget(
+            self.raw_checkbox, alignment=Qt.AlignmentFlag.AlignLeft
+        )
+        self.options_layout.addWidget(
+            self.raw_only_checkbox, alignment=Qt.AlignmentFlag.AlignLeft
+        )
+        self.options_layout.addWidget(
+            self.csv_checkbox, alignment=Qt.AlignmentFlag.AlignLeft
+        )
+        self.options_layout.addWidget(
+            self.daily_file_checkbox, alignment=Qt.AlignmentFlag.AlignLeft
+        )
 
         # ------- Add all layouts to group -------
         main_settings_layout.addLayout(self.settings_layout)
@@ -230,21 +303,44 @@ class GUIApp(QWidget):
         # Tab 2
         self.table = QTableWidget()
         self.table.setColumnCount(10)
-        self.table.setHorizontalHeaderLabels([
-            "Timestamp", "Fn Code", "Function name", "Msg Type", "Slave ID","Data Address", "Data Qty", "Byte Count", "Data", "Occurrences"
-        ])
+        self.table.setHorizontalHeaderLabels(
+            [
+                "Timestamp",
+                "Fn Code",
+                "Function name",
+                "Msg Type",
+                "Slave ID",
+                "Data Address",
+                "Data Qty",
+                "Byte Count",
+                "Data",
+                "Occurrences",
+            ]
+        )
 
         delegate = AdvancedAlignDelegate()
         delegate.set_column_alignment(0, Qt.AlignmentFlag.AlignLeft)
         delegate.set_column_alignment(2, Qt.AlignmentFlag.AlignLeft)
         delegate.set_column_alignment(3, Qt.AlignmentFlag.AlignLeft)
         delegate.set_column_alignment(8, Qt.AlignmentFlag.AlignLeft)
-        delegate.set_column_alignment(1, Qt.AlignmentFlag.AlignHCenter, Qt.AlignmentFlag.AlignVCenter)
-        delegate.set_column_alignment(4, Qt.AlignmentFlag.AlignHCenter, Qt.AlignmentFlag.AlignVCenter)
-        delegate.set_column_alignment(5, Qt.AlignmentFlag.AlignHCenter, Qt.AlignmentFlag.AlignVCenter)
-        delegate.set_column_alignment(6, Qt.AlignmentFlag.AlignHCenter, Qt.AlignmentFlag.AlignVCenter)
-        delegate.set_column_alignment(7, Qt.AlignmentFlag.AlignHCenter, Qt.AlignmentFlag.AlignVCenter)
-        delegate.set_column_alignment(9, Qt.AlignmentFlag.AlignHCenter, Qt.AlignmentFlag.AlignVCenter)
+        delegate.set_column_alignment(
+            1, Qt.AlignmentFlag.AlignHCenter, Qt.AlignmentFlag.AlignVCenter
+        )
+        delegate.set_column_alignment(
+            4, Qt.AlignmentFlag.AlignHCenter, Qt.AlignmentFlag.AlignVCenter
+        )
+        delegate.set_column_alignment(
+            5, Qt.AlignmentFlag.AlignHCenter, Qt.AlignmentFlag.AlignVCenter
+        )
+        delegate.set_column_alignment(
+            6, Qt.AlignmentFlag.AlignHCenter, Qt.AlignmentFlag.AlignVCenter
+        )
+        delegate.set_column_alignment(
+            7, Qt.AlignmentFlag.AlignHCenter, Qt.AlignmentFlag.AlignVCenter
+        )
+        delegate.set_column_alignment(
+            9, Qt.AlignmentFlag.AlignHCenter, Qt.AlignmentFlag.AlignVCenter
+        )
         self.table.setItemDelegate(delegate)
 
         header = self.table.horizontalHeader()
@@ -275,7 +371,7 @@ class GUIApp(QWidget):
         baudrate = int(self.baudrate_input.currentText())
         parity_str = self.parity_input.currentText()
         timeout_input = self.timeout_input.text()
-        timeout_input = None if timeout_input=="" else timeout_input
+        timeout_input = None if timeout_input == "" else timeout_input
         log_to_file = self.log_to_file_checkbox.isChecked()
         raw = self.raw_checkbox.isChecked()
         raw_only = self.raw_only_checkbox.isChecked()
@@ -292,10 +388,15 @@ class GUIApp(QWidget):
             raw_only=raw_only,
             daily_file=daily_file,
             csv=csv,
-            GUI = True
+            GUI=True,
         )
 
-        self.log_window.append(f"<span style='color:yellow'>[INFO] Starting sniffer on {config['port']}, {config['baudrate']}, {parity_str}, Timeout: {config['timeout']}</span>")
+        self.log_window.append(
+            f"<span style='color:yellow'>[INFO] Starting sniffer on {
+                config['port']}, {
+                config['baudrate']}, {parity_str}, Timeout: {
+                config['timeout']}</span>"
+        )
 
         self.sniffer_thread = SnifferWorker(**config)
         self.sniffer_thread.log_signal.connect(self.update_log_window)
@@ -310,10 +411,12 @@ class GUIApp(QWidget):
             self.sniffer_thread.stop()
         self.start_btn.setEnabled(True)
         self.stop_btn.setEnabled(False)
-        self.log_window.append("<span style='color:yellow'>[INFO] Sniffer stopped.</span>")
-    
+        self.log_window.append(
+            "<span style='color:yellow'>[INFO] Sniffer stopped.</span>"
+        )
+
     def clear_sniffer_view(self):
-        print ("cleared")
+        print("cleared")
         self.table.setRowCount(0)
         self.data_dict.clear()
 
@@ -322,30 +425,33 @@ class GUIApp(QWidget):
         self.last_master = None
         self.last_ok_color = "blue"
 
-        
-
     def update_log_window(self, log_entry):
         """
         Update logs in log wiev window.
-        Add coloring of the logs 
+        Add coloring of the logs
         """
         if "Master" in log_entry:
-            if self.last_master == "no response":  
-                log_entry = f"<span style='color:{self.pastel_red}'>{log_entry}</span>"
+            if self.last_master == "no response":
+                log_entry = f"<span style='color:{
+                    self.pastel_red}'>{log_entry}</span>"
             else:
                 if self.last_ok_color == "blue":
-                    log_entry = f"<span style='color:{self.pastel_green}'>{log_entry}</span>"
+                    log_entry = f"<span style='color:{
+                        self.pastel_green}'>{log_entry}</span>"
                     self.last_ok_color = "green"
                 else:
-                    log_entry = f"<span style='color:{self.pastel_blue}'>{log_entry}</span>"
+                    log_entry = f"<span style='color:{
+                        self.pastel_blue}'>{log_entry}</span>"
                     self.last_ok_color = "blue"
                 self.last_master = "no response"
         elif "Slave" in log_entry:
-            self.last_master = "answered"  
+            self.last_master = "answered"
             if self.last_ok_color == "blue":
-                log_entry = f"<span style='color:{self.pastel_blue}'>{log_entry}</span>"
+                log_entry = f"<span style='color:{
+                    self.pastel_blue}'>{log_entry}</span>"
             else:
-                log_entry = f"<span style='color:{self.pastel_green}'>{log_entry}</span>"
+                log_entry = f"<span style='color:{
+                    self.pastel_green}'>{log_entry}</span>"
             # add separation after slave log
             log_entry += "<br>"
 
@@ -359,7 +465,9 @@ class GUIApp(QWidget):
             for frame in data:
                 self.add_parsed_data(frame)
         else:
-            self.log_window.append(f"[WARN] Unexpected data type: {type(data)} - {data}")
+            self.log_window.append(
+                f"[WARN] Unexpected data type: {type(data)} - {data}"
+            )
 
     def format_table_fields(self, value):
         """
@@ -375,11 +483,17 @@ class GUIApp(QWidget):
                 write_addr = int(value["write_address"])
                 read_qty = int(value["read_quantity"])
                 write_qty = int(value["write_quantity"])
-                formatted_address = f"R: 0x{read_addr:04X} W: 0x{write_addr:04X}"
+                formatted_address = f"R: 0x{
+                    read_addr:04X} W: 0x{
+                    write_addr:04X}"
                 formatted_quantity = f"R: {read_qty} W: {write_qty}"
             except (ValueError, TypeError):
-                formatted_address = f"R: {value['read_address']} W: {value['write_address']}"
-                formatted_quantity = f"R: {value['read_quantity']} W: {value['write_quantity']}"
+                formatted_address = (
+                    f"R: {value['read_address']} W: {value['write_address']}"
+                )
+                formatted_quantity = (
+                    f"R: {value['read_quantity']} W: {value['write_quantity']}"
+                )
         else:
             # Fallback for other function codes
             data_address = value.get("data_address")
@@ -394,14 +508,10 @@ class GUIApp(QWidget):
             formatted_quantity = str(value.get("data_qty", ""))
 
         return formatted_address, formatted_quantity
-    
+
     def format_data_field(self, value):
         """
-        Returns formatted string for the 'data' column (col 8), depending on message type.
-        """
-    def format_data_field(self, value):
-        """
-        Formats data column (col 8). If 'exception', shows exception code. 
+        Formats data column (col 8). If 'exception', shows exception code.
         Otherwise formats as list of uint16_t words in hex (big-endian).
         """
         if value.get("function_name") == "exception":
@@ -414,74 +524,97 @@ class GUIApp(QWidget):
             else:
                 return "Exception Code: Unknown"
         else:
-            return (", ".join(f"0x{byte:04X}" for byte in value["data"]))
-
+            return ", ".join(f"0x{byte:04X}" for byte in value["data"])
 
     def add_parsed_data(self, frame):
-        key = (frame['slave_id'], frame['function'], frame['data_qty'],frame['data_address'],frame ['message_type'], frame ['exception_code'])
-        timestamp = frame.get('timestamp', '')
-        message_type = frame.get('message_type', '')
-        data = frame.get('data', [])
-        
+        key = (
+            frame["slave_id"],
+            frame["function"],
+            frame["data_qty"],
+            frame["data_address"],
+            frame["message_type"],
+            frame["exception_code"],
+        )
+        timestamp = frame.get("timestamp", "")
+        message_type = frame.get("message_type", "")
+        data = frame.get("data", [])
+
         if key in self.data_dict:
             self.data_dict[key]["occurrences"] += 1
-            self.data_dict[key]["timestamp"] = timestamp  
-            self.data_dict[key]["data"] = data  
+            self.data_dict[key]["timestamp"] = timestamp
+            self.data_dict[key]["data"] = data
         else:
             self.data_dict[key] = {
                 "timestamp": timestamp,
                 "message_type": message_type,
-                "slave_id": frame['slave_id'],
-                "function": frame['function'],
-                "function_name": frame['function_name'],
-                "data_address": frame['data_address'],
-                "data_qty": frame['data_qty'],
-                "byte_count": frame['byte_cnt'],
+                "slave_id": frame["slave_id"],
+                "function": frame["function"],
+                "function_name": frame["function_name"],
+                "data_address": frame["data_address"],
+                "data_qty": frame["data_qty"],
+                "byte_count": frame["byte_cnt"],
                 "data": data,
                 "occurrences": 1,
-                "exception_code":frame ['exception_code'],
-                #FC 23 additional fields
-                "read_address": frame['read_address'],
-                "read_quantity": frame['read_quantity'],
-                "write_address": frame['write_address'],
-                "write_quantity": frame['write_quantity'],
+                "exception_code": frame["exception_code"],
+                # FC 23 additional fields
+                "read_address": frame["read_address"],
+                "read_quantity": frame["read_quantity"],
+                "write_address": frame["write_address"],
+                "write_quantity": frame["write_quantity"],
             }
 
         self.update_parsed_data_table()
 
     def update_parsed_data_table(self):
-        self.table.setRowCount(0)  
+        self.table.setRowCount(0)
         for key, value in self.data_dict.items():
             row_position = self.table.rowCount()
             self.table.insertRow(row_position)
-            #Data adress field formating i case if emty str recived
-            data_address = value.get("data_address")
-            hex_address = ""
-            if data_address is not None and str(data_address).strip():
-                try:
-                    hex_address = f"0x{int(data_address):04X}"
-                except (ValueError, TypeError):
-                    hex_address = str(data_address)
+            # Data adress field formating i case if emty str recived
+            # data_address = value.get("data_address")
+            # hex_address = ""
+            # if data_address is not None and str(data_address).strip():
+            #     try:
+            #         hex_address = f"0x{int(data_address):04X}"
+            #     except (ValueError, TypeError):
+            #         hex_address = str(data_address)
 
             formatted_address, formatted_quantity = self.format_table_fields(value)
             formatted_data = self.format_data_field(value)
 
             # Adding data to table view
-            self.table.setItem(row_position, 0, QTableWidgetItem(value["timestamp"].replace("T", " ")))
+            self.table.setItem(
+                row_position, 0, QTableWidgetItem(value["timestamp"].replace("T", " "))
+            )
             self.table.setItem(row_position, 3, QTableWidgetItem(value["message_type"]))
-            self.table.setItem(row_position, 4, QTableWidgetItem(str(value["slave_id"])))
-            self.table.setItem(row_position, 1, QTableWidgetItem(f"0x{value['function']:02X}"))
-            self.table.setItem(row_position, 2, QTableWidgetItem(value["function_name"]))
+            self.table.setItem(
+                row_position, 4, QTableWidgetItem(str(value["slave_id"]))
+            )
+            self.table.setItem(
+                row_position, 1, QTableWidgetItem(f"0x{value['function']:02X}")
+            )
+            self.table.setItem(
+                row_position, 2, QTableWidgetItem(value["function_name"])
+            )
             self.table.setItem(row_position, 5, QTableWidgetItem(formatted_address))
             self.table.setItem(row_position, 6, QTableWidgetItem(formatted_quantity))
-            self.table.setItem(row_position, 7, QTableWidgetItem(str(value["byte_count"])))
+            self.table.setItem(
+                row_position, 7, QTableWidgetItem(str(value["byte_count"]))
+            )
             self.table.setItem(row_position, 8, QTableWidgetItem(formatted_data))
-            self.table.setItem(row_position, 9, QTableWidgetItem(str(value["occurrences"])))
-            
+            self.table.setItem(
+                row_position, 9, QTableWidgetItem(str(value["occurrences"]))
+            )
+
         self.table.resizeColumnsToContents()
 
-if __name__ == "__main__":
+
+def main():
     app = QApplication(sys.argv)
     window = GUIApp()
     window.show()
     sys.exit(app.exec())
+
+
+if __name__ == "__main__":
+    main()

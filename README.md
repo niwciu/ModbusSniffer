@@ -13,198 +13,70 @@ Easily analyze and debug communication between PLCs, HMIs, and other Modbus RTU 
 
 ---
 
-## 🚀 Why ModbusSniffer (This Fork)?
-
-### 🔍 General Highlights
+## 🔧 Features
 
 - 🧰 Sniffs raw Modbus RTU frames from serial ports (RS-485, USB)
-- 🖥️ Graphical User Interface (PyQt6) — no terminal needed
-- 📋 Frame table: Real-time view with decoded address, function code, and data
-- 🌈 Live Logging: Color-coded request–response pairs, unmatched requests highlighted
+- 🖥️ GUI interface built with PyQt6
+- 📋 Frame table: Real-time decoded Modbus traffic
+- 🌈 Color-coded logging of request–response frames
 - 🪟 Cross-platform: Windows & Linux
-- 🆓 Free & Open Source (MIT license)
-
-### 🛠️ Why This Fork (What's New)
-
-- 💻 Modular code refactor — clear separation into modules and classes
-- 🧠 Rewritten Modbus parser (`ModbusParser` class) with clean structure
-- 🖥️ Fully integrated GUI (previously only CLI)
-- 🔄 All command-line functionality preserved and upgraded into the GUI
+- 🆓 MIT licensed, open-source
 
 ---
 
-## 🧰 Easy Installation (Pre-built Binaries or Install Scripts for Windows and Linux)
+## 📦 Installation
 
-You don't need to build anything manually!  
-This project uses GitHub Actions (GHA) to automatically build and publish verified binaries for each release.  
-Pre-built versions for Windows and Ubuntu are available under the [Releases](https://github.com/niwciu/ModbusSniffer/releases) tab.
+Install directly from PyPI:
 
-For custom builds and automatic shortcut setup, see the **🛠️ Build & Install** section below.
+```bash
+pip install modbus-sniffer
+```
+or download Binary files for Ubuntu and Windows from [here](https://github.com/niwciu/ModbusSniffer/releases).
+
+You can also build and install app from sourcess. [Click here](CONTRIBUTING.md#%EF%B8%8F-build--install) for deatails about it.
+
 
 ---
 
-## 🛠️ Build & Install
+## ▶️ Usage
 
-### 1. General Requirements
-
-#### - Python 3 installed
-#### - pip3 installed 
-
-#### 🐧 Linux
-```bash
-sudo apt install python3-pip
-```
-
-#### 🪟 Windows
-```powershell
-python -m ensurepip --upgrade
-```
-
-### 2. Clone the Repository
+### 🎛️ Run GUI:
 
 ```bash
-git clone https://github.com/niwciu/ModbusSniffer.git
-cd ModbusSniffer
+modbus-sniffer-gui
 ```
 
-### 3. Build Executable (for Ubuntu and Windows)
-
-> **Note:** If you only want to **run** the app and not build it, skip this step and go to **▶️ Running GUI app without build**.
-
-#### 🐧 Linux
-
+### 🖥️ Run CLI:
+To list all options:
 ```bash
-sudo chmod +x build.sh
-./build.sh
+modbus-sniffer -h
 ```
 
-> This script:
-> * Cleans previous build files (build/, dist/, .spec, \_\_pycache\_\_)
-> * Creates a virtual environment and installs dependencies
-> * Uses PyInstaller to build the app
-> * Adds Start Menu and desktop shortcuts
 
-#### 🪟 Windows
-
-```powershell
-./build.bat
+Example of runnig sniffer on ttyUSB0 with baud 115200 and no parity:
+```bash
+modbus-sniffer -p /dev/ttyUSB0 -b 115200 -r none
 ```
 
-> This script:
-> * Cleans previous build files
-> * Sets up a virtual environment and installs dependencies
-> * Builds a standalone `.exe` using PyInstaller
-> * Adds desktop and Start Menu shortcuts
+For more usage options, development guide, and installation from source, visit the GitHub repository:
+
+👉 [ModbusSniffer on GitHub](https://github.com/niwciu/ModbusSniffer)
 
 ---
-
-## ▶️ Running GUI app without build
-
-```bash
-git clone https://github.com/niwciu/ModbusSniffer.git
-cd ModbusSniffer
-```
-
-### 1. Create and Activate Virtual Environment
-
-#### 🐧 Linux
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-```
-
-#### 🪟 Windows (PowerShell)
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-```
-
-### 2. Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 3. Run GUI app
-
-```bash
-python3 modbus_sniffer_GUI.py
-```
-
-### 4. Deactivate Virtual Environment
-
-```bash
-deactivate
-```
-
----
-
-## 🎮 CLI app Usage
-
-```bash
-git clone https://github.com/niwciu/ModbusSniffer.git
-cd ModbusSniffer
-```
-
-### CLI Help
-
-```bash
-python3 modbus_sniffer.py -h
-```
-
-### Example
-
-```bash
-python3 modbus_sniffer.py -p /dev/ttyUSB0 -b 115200 -r none
-```
-
----
-
-## 🆕 What’s New
-
-See the full [CHANGELOG.md](CHANGELOG.md) for details.
-
----
-
-## 🔧 ToDo
-
-- Integrate CSV logging with new Modbus parser
-- Improve GUI with:
-  - Add frame filtering
-  - Integrate CSV logger functionality with GUI
-
-## 📚 Documentation & Support
-
-- Detailed documentation will be available in the `docs/` folder soon.
-- Questions or issues? Open an [issue](https://github.com/niwciu/ModbusSniffer/issues) or join the [Discussions](https://github.com/niwciu/ModbusSniffer/discussions).
-
----
-
 ## 🤝 Contributing
 
-Contributions are welcome!
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature-name`)
-3. Commit your changes (`git commit -m "Add feature"`)
-4. Push to branch (`git push origin feature-name`)
-5. Open a Pull Request
+Please see [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and contribution guidelines.
 
 ---
 
 ## 📜 License
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file.
+MIT License — see the [LICENSE](LICENSE) file for details.  
+This project is a fork of [BADAndrea ModbusSniffer](https://github.com/BADAndrea/ModbusSniffer), maintained by **niwciu** with enhancements described above.
 
-This project is a fork of [BADAndrea ModbusSniffer](https://github.com/BADAndrea/ModbusSniffer)  
-Fork maintained by **niwciu** with enhancements described above.
 
----
-
-❤️ Thank you for using this version of ModbusSniffer!
-
-<div align="center">
 ***
 <img src="https://github.com/user-attachments/assets/f4825882-e285-4e02-a75c-68fc86ff5716" alt="myEmbeddedWayBanerWhiteSmaller"/>
+
 ***
 </div>

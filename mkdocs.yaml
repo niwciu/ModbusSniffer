@@ -1,0 +1,59 @@
+site_name: ModbusSniffer
+site_description: Lightweight Modbus RTU Sniffer with GUI
+site_url: https://niwciu.github.io/ModbusSniffer/
+repo_url: https://github.com/niwciu/ModbusSniffer
+
+theme:
+  name: material
+  language: en
+  logo: img/icon-4.png
+  favicon: img/icon-4.png
+  features:
+    - navigation.instant
+    - navigation.top
+    - navigation.sections
+    - navigation.expand
+    - content.code.copy
+    - content.action.edit
+    - content.tabs.link
+    - content.tooltips
+    - content.code.annotate
+    - header.autohide
+    - toc.integrate
+    - footer.social
+    - palette.toggle
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: blue
+      accent: light blue
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: blue
+      accent: cyan
+
+markdown_extensions:
+  - admonition
+  - toc:
+      permalink: true
+  - tables
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.snippets
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+nav:
+  - Home: index.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/niwciu/ModbusSniffer
+    - icon: fontawesome/solid/envelope
+      link: mailto:niwciu@gmail.com

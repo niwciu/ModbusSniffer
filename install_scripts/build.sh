@@ -2,13 +2,13 @@
 
 # Variables
 APP_NAME="ModbusSniffer"
-MAIN_PY="modbus_sniffer_GUI.py"
-ICON="images/icon-4.png"
+MAIN_PY="../src/modbus_sniffer/gui.py"
+ICON="../images/icon-4.png"
 DESKTOP_FILE="$APP_NAME.desktop"
-BUILD_DIR="build"
-DIST_DIR="dist"
+BUILD_DIR="./build"
+DIST_DIR="./dist"
 LOCAL_APP_DIR="$HOME/.local/share/applications"
-VENV_DIR=".venv"
+VENV_DIR="../.venv"
 
 # Clean previous build
 rm -rf "$BUILD_DIR" "$DIST_DIR" __pycache__ *.spec
