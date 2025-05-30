@@ -4,8 +4,9 @@
 
 ## ⚙️ CI/CD Improvements
 - 🛠️ Added new GitHub Actions workflows:
-  - **deploy_static.yml** for auto-publishing the documentation site  
-  - **ci.yml** steps running smoke-tests on every push/pr with additional manual trigger
+  - **deploy_app_page.yml** for auto-publishing the documentation site  
+  - **ci.yml** steps running lint tests and build on every push/pr with additional manual trigger
+  - **build_and_release** for build and release binary files for Windows and Ubuntu
 
 ## 📦 PyPI Deployment & Project Restructure
 - 📂 Reorganized project into **src/** layout and added **pyproject.toml** per Python Packaging User Guide  

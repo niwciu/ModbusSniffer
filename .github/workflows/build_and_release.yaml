@@ -39,7 +39,7 @@ jobs:
         with:
           name: ubuntu-build
           path: release/ModbusSniffer-linux.tar.gz
-          
+
   build_windows:
     name: Build Windows Binary
     runs-on: windows-latest
@@ -138,7 +138,7 @@ jobs:
           body: ${{ steps.changelog.outputs.changelog }}
           files: |
             dist/ModbusSniffer-linux.tar.gz
-            dist/ModbusSniffer.exe
+            dist/ModbusSniffer-windows.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
