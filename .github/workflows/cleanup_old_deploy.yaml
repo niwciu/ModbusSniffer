@@ -1,0 +1,29 @@
+name: Cleanup Old Deployments
+
+on:
+  workflow_dispatch:  # Umożliwia ręczne uruchomienie
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete old GitHub Pages deployments
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const deployments = await github.rest.repos.listDeployments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              environment: 'github-pages'
+            });
+            
+            // Zostaw tylko NAJNOWSZY deployment (indeks 0)
+            const toDelete = deployments.data.slice(1);
+            
+            for (const deployment of toDelete) {
+              await github.rest.repos.deleteDeployment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                deployment_id: deployment.id
+              });
+            }
