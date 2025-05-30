@@ -392,10 +392,8 @@ class GUIApp(QWidget):
         )
 
         self.log_window.append(
-            f"<span style='color:yellow'>[INFO] Starting sniffer on {
-                config['port']}, {
-                config['baudrate']}, {parity_str}, Timeout: {
-                config['timeout']}</span>"
+            f"<span style='color:yellow'>[INFO] Starting sniffer on "
+            f"{config['port']}, {config['baudrate']}, {parity_str}, Timeout: {config['timeout']}</span>"
         )
 
         self.sniffer_thread = SnifferWorker(**config)
@@ -432,26 +430,21 @@ class GUIApp(QWidget):
         """
         if "Master" in log_entry:
             if self.last_master == "no response":
-                log_entry = f"<span style='color:{
-                    self.pastel_red}'>{log_entry}</span>"
+                log_entry = f"<span style='color:{self.pastel_red}'>{log_entry}</span>"
             else:
                 if self.last_ok_color == "blue":
-                    log_entry = f"<span style='color:{
-                        self.pastel_green}'>{log_entry}</span>"
+                    log_entry = f"<span style='color:{self.pastel_green}'>{log_entry}</span>"
                     self.last_ok_color = "green"
                 else:
-                    log_entry = f"<span style='color:{
-                        self.pastel_blue}'>{log_entry}</span>"
+                    log_entry = f"<span style='color:{self.pastel_blue}'>{log_entry}</span>"
                     self.last_ok_color = "blue"
                 self.last_master = "no response"
         elif "Slave" in log_entry:
             self.last_master = "answered"
             if self.last_ok_color == "blue":
-                log_entry = f"<span style='color:{
-                    self.pastel_blue}'>{log_entry}</span>"
+                log_entry = f"<span style='color:{self.pastel_blue}'>{log_entry}</span>"
             else:
-                log_entry = f"<span style='color:{
-                    self.pastel_green}'>{log_entry}</span>"
+                log_entry = f"<span style='color:{self.pastel_green}'>{log_entry}</span>"
             # add separation after slave log
             log_entry += "<br>"
 
@@ -483,9 +476,7 @@ class GUIApp(QWidget):
                 write_addr = int(value["write_address"])
                 read_qty = int(value["read_quantity"])
                 write_qty = int(value["write_quantity"])
-                formatted_address = f"R: 0x{
-                    read_addr:04X} W: 0x{
-                    write_addr:04X}"
+                formatted_address = f"R: 0x{read_addr:04X} W: 0x{write_addr:04X}"
                 formatted_quantity = f"R: {read_qty} W: {write_qty}"
             except (ValueError, TypeError):
                 formatted_address = (
