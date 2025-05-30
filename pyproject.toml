@@ -17,7 +17,8 @@ dev = [
   "pytest-cov",
   "pytest-qt",
   "flake8",
-  "black"
+  "black",
+  "pyinstaller"
 ]
 
 [project.scripts]

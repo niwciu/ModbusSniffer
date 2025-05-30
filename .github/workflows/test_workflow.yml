@@ -1,0 +1,134 @@
+name: Build & Release App
+
+on:
+  push:
+
+jobs:
+  build_ubuntu:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.3'
+
+      - name: Install dependencies & build
+        working-directory: src/modbus_sniffer
+        run: |
+          python3 -m venv venv
+          source venv/bin/activate
+          pip install -r ../../install_scripts/requirements.txt
+          pip install pyinstaller
+          pyinstaller --onefile --name "ModbusSniffer" gui.py
+          chmod +x dist/ModbusSniffer
+
+      - name: Create Release Package
+        run: |
+          # Tworzenie archiwum
+          mkdir -p release
+          tar -czvf release/ModbusSniffer-linux.tar.gz -C src/modbus_sniffer/dist ModbusSniffer
+          
+          # Sprawdzenie, czy plik został utworzony
+          ls -al release
+          
+      - name: Upload Ubuntu artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ubuntu-build
+          path: release/ModbusSniffer-linux.tar.gz
+
+  build_windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.3'
+
+      - name: Install dependencies & build
+        working-directory: src\modbus_sniffer
+        run: |
+          python3 -m venv venv
+          .\venv\Scripts\activate
+          pip install -r ..\..\install_scripts\requirements.txt
+          pip install pyinstaller
+          .\venv\Scripts\activate
+          pyinstaller --onefile --noconsole --name "ModbusSniffer.exe" --icon="..\..\images\icon.ico" gui.py
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-build
+          path: src\modbus_sniffer\dist\ModbusSniffer.exe
+
+#   release:
+#     needs: [build_ubuntu, build_windows]
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+
+#       - name: Extract changelog for tag
+#         id: changelog
+#         run: |
+#           if [[ "${GITHUB_REF}" =~ refs/tags/ ]]; then
+#             TAG_NAME="${GITHUB_REF#refs/tags/}"
+#             echo "Extracted TAG_NAME: $TAG_NAME"
+      
+#             CONTENT=$(awk -v tag="$TAG_NAME" '
+#               BEGIN { found=0 }
+#               $0 ~ "^# +" tag {
+#                 found=1
+#               }
+#               found && $0 ~ "^# +v[0-9]+\\.[0-9]+\\.[0-9]+" && $0 !~ tag {
+#                 exit
+#               }
+#               found { print }
+#             ' CHANGELOG.md)
+      
+#             echo "Extracted changelog:"
+#             echo "$CONTENT"
+      
+#             echo "changelog<<EOF" >> $GITHUB_OUTPUT
+#             echo "$CONTENT" >> $GITHUB_OUTPUT
+#             echo "EOF" >> $GITHUB_OUTPUT
+      
+#             echo "release_name=$TAG_NAME" >> $GITHUB_OUTPUT
+#           else
+#             echo "Not a tag release. Skipping changelog extraction."
+#             echo "changelog=No changelog found." >> $GITHUB_OUTPUT
+#             echo "release_name=Unnamed release" >> $GITHUB_OUTPUT
+#           fi
+
+#       - name: Download Ubuntu artifact
+#         uses: actions/download-artifact@v4
+#         with:
+#           name: ubuntu-build
+#           path: dist/
+
+#       - name: Download Windows artifact
+#         uses: actions/download-artifact@v4
+#         with:
+#           name: windows-build
+#           path: dist/
+
+#       - name: Create GitHub Release
+#         uses: softprops/action-gh-release@v1
+#         with:
+#           tag_name: ${{ github.ref_name }}
+#           name: ${{ steps.changelog.outputs.release_name }}
+#           body: ${{ steps.changelog.outputs.changelog }}
+#           files: |
+#             dist/ModbusSniffer-linux.tar.gz
+#             dist/ModbusSniffer.exe
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
