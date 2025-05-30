@@ -1,9 +1,10 @@
-name: Build & Release App
+name: Build & Release
 
 on:
   push:
     tags:
       - 'v*'  # Uruchamiaj tylko przy tagach np. v1.0.2
+  workflow_dispatch: 
 
 jobs:
   build_ubuntu:
@@ -16,23 +17,21 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12.3'
 
       - name: Install dependencies & build
         run: |
-          python -m venv venv
+          python3 -m venv venv
           source venv/bin/activate
           pip install -r install_scripts/requirements.txt
           pip install pyinstaller
-          cd src/modbus_sniffer
-          pyinstaller --onefile --name "ModbusSniffer" gui.py
-          chmod +x ../../dist/ModbusSniffer
-          
-          # Tworzenie archiwum
+          pyinstaller --onefile --name "ModbusSniffer" --paths="src" src/modbus_sniffer/gui.py
+          chmod +x dist/ModbusSniffer
+
+      - name: Create Release Package
+        run: |
           mkdir -p release
           tar -czvf release/ModbusSniffer-linux.tar.gz -C dist ModbusSniffer
-          
-          # Sprawdzenie, czy plik został utworzony
           ls -al release
           
       - name: Upload Ubuntu artifact
@@ -40,33 +39,44 @@ jobs:
         with:
           name: ubuntu-build
           path: release/ModbusSniffer-linux.tar.gz
-
+          
   build_windows:
+    name: Build Windows Binary
     runs-on: windows-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.12.3'
 
-      - name: Install dependencies & build
-        run: |
-          python -m venv venv
-          .\venv\Scripts\activate
-          pip install -r install_scripts/requirements.txt
-          pip install pyinstaller
-          cd src/modbus_sniffer
-          pyinstaller --onefile --noconsole --name "ModbusSniffer.exe" --icon="./images/icon.ico" src/modbus_sniffer/gui.py
+    - name: Install Python dependencies
+      run: |
+        python -m venv .venv
+        .venv\Scripts\pip install --upgrade pip
+        .venv\Scripts\pip install -e ".[dev]"
 
-      - name: Upload Windows artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-build
-          path: dist\ModbusSniffer.exe
+    - name: Build Windows binary
+      run: |
+        .venv\Scripts\pyinstaller `
+          --onefile `
+          --noconsole `
+          --name "ModbusSniffer" `
+          --paths="src" `
+          --hidden-import modbus_sniffer.modbus_parser_new `
+          --icon="images/icon.ico" `
+          src/modbus_sniffer/gui.py
+    - name: Create Release Package
+      run: |
+        mkdir release
+        Copy-Item -Path "images\icon.ico" -Destination "dist\images"
+        Compress-Archive -Path dist\* -DestinationPath release\ModbusSniffer-windows.zip
+
+    - name: Upload Windows artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-build
+        path: release\ModbusSniffer-windows.zip
 
   release:
     needs: [build_ubuntu, build_windows]
@@ -131,3 +141,4 @@ jobs:
             dist/ModbusSniffer.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

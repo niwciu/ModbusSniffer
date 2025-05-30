@@ -21,7 +21,7 @@
 
 
 <div align="center">
-  <img src="https://github.com/niwciu/ModbusSniffer/blob/main/doc/gui.gif?raw=true" alt="ModbusSniffer GUI demo" />
+  <img src="https://niwciu.github.io/ModbusSniffer/gui.gif" alt="ModbusSniffer GUI demo" />
   <p><em>Live preview of ModbusSniffer GUI in action</em></p>
 </div>
 

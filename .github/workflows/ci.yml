@@ -99,6 +99,18 @@ jobs:
           --hidden-import modbus_sniffer.modbus_parser_new \
           src/modbus_sniffer/gui.py
 
+    - name: Verify Linux binary exists
+      run: |
+        if [ ! -f "dist/ModbusSniffer" ]; then
+          echo "::error::Binary file was not created!"
+          ls -la dist/
+          exit 1
+        else
+          echo "Binary file exists:"
+          ls -la dist/ModbusSniffer
+          file dist/ModbusSniffer
+        fi
+
   build_windows:
     name: Build Windows Binary
     runs-on: windows-latest
@@ -123,5 +135,17 @@ jobs:
           --noconsole `
           --name "ModbusSniffer" `
           --paths="src" `
+          --hidden-import modbus_sniffer.modbus_parser_new `
           --icon="images/icon.ico" `
           src/modbus_sniffer/gui.py
+
+    - name: Verify Windows binary exists
+      run: |
+        if (!(Test-Path -Path "dist\ModbusSniffer.exe")) {
+          Write-Error "Binary file was not created!"
+          Get-ChildItem -Path dist
+          exit 1
+        } else {
+          Write-Output "Binary file exists:"
+          Get-ChildItem -Path dist\ModbusSniffer.exe
+        }
