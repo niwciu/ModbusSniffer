@@ -164,21 +164,21 @@ python -m venv .venv
 pip install -e .[dev]
 ```
 
-### 3. Run CLI Help 🖥️ 
+### 4. Run CLI Help 🖥️ 
 
 ```bash
 modbus-sniffer -h
 ```
 > Note: virtual environment (.venv) must be active.
 
-### 4. Example of usage 🧪
+### 5. Example of usage 🧪
 Run modbus-sniffer CLI app on port USB0 with baud 115200 and parity=none
 ```bash
 modbus-sniffer -p /dev/ttyUSB0 -b 115200 -r none
 ```
 > Note: virtual environment (.venv) must be active.
 
-### 4. Deactivate Virtual Environment
+### 6. Deactivate Virtual Environment
 
 ```bash
 deactivate
@@ -251,7 +251,7 @@ python -m venv .venv
 pip install -r ./install_scripts/requirements.txt
 ```
 
-### 3. Run CLI Help 🖥️ 
+### 4. Run CLI Help 🖥️ 
 
 ```bash
 cd src/modbus_sniffer
@@ -259,7 +259,7 @@ python cli.py -h
 ```
 > Note: virtual environment (.venv) must be active.
 
-### 4. Example of usage 🧪
+### 5. Example of usage 🧪
 Run modbus-sniffer CLI app on port USB0 with baud 115200 and parity=none
 ```bash
 cd src/modbus_sniffer #optional - if running from project main folder
@@ -267,7 +267,7 @@ python cli.py -p /dev/ttyUSB0 -b 115200 -r none
 ```
 > Note: virtual environment (.venv) must be active.
 
-### 4. Deactivate Virtual Environment
+### 6. Deactivate Virtual Environment
 
 ```bash
 deactivate
