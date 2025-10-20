@@ -94,8 +94,7 @@ class ModbusParser:
             self.trashdataf += f" {byte:02x}"
         else:
             self.trashdata = True
-            self.trashdataf = f"\033[33mWarning \033[0m: Ignoring data: [{
-                byte:02x}"
+            self.trashdataf = f"\033[33mWarning \033[0m: Ignoring data: [{byte:02x}"
         self.bufferIndex = index + 1
 
     def _log_raw(self, buffer, start, end):
@@ -165,8 +164,7 @@ class ModbusParser:
             return None
         self._log_raw(buffer, start, self.bufferIndex)
         self._log_data(
-            f"Master\t-> ID: {sid}, FC: 0x{
-                fc:02x}, Read address: {read_address}, Read Quantity: {read_qty}"
+            f"Master\t-> ID: {sid}, FC: 0x{fc:02x}, Read address: {read_address}, Read Quantity: {read_qty}"
         )
         self._log_csv(
             datetime.now().isoformat(), sid, "READ", read_address, read_qty, []
@@ -203,8 +201,7 @@ class ModbusParser:
         )
         fname = "Read Holding Registers" if fc == 3 else "Read Input Registers"
         self._log_data(
-            f"Master\t-> ID: {sid}, FC: 0x{
-                fc:02x}, Read address: {read_address}, Read Quantity: {read_qty}"
+            f"Master\t-> ID: {sid}, FC: 0x{fc:02x}, Read address: {read_address}, Read Quantity: {read_qty}"
         )
         self._log_csv(
             datetime.now().isoformat(), sid, "READ", read_address, read_qty, []
@@ -234,10 +231,7 @@ class ModbusParser:
             return None
         self._log_raw(buffer, start, self.bufferIndex)
         self._log_data(
-            f"Master\t-> ID: {sid}, FC: 0x{
-                fc:02x}, Write addr: {addr}, Data: {
-                int.from_bytes(
-                    data, 'big')}"
+            f"Master\t-> ID: {sid}, FC: 0x{fc:02x}, Write addr: {addr}, Data: {int.from_bytes(data, 'big')}"
         )
         fname = "Write Single Coil" if fc == 5 else "Write Single Register"
         frame = self._common_frame(
@@ -445,10 +439,7 @@ class ModbusParser:
         self._log_raw(buffer, start, self.bufferIndex)
         fname = "Write Single Coil" if fc == 5 else "Write Single Register"
         self._log_data(
-            f"Slave\t-> ID: {sid}, FC: 0x{
-                fc:02x}, Echo addr: {addr}, Data: {
-                int.from_bytes(
-                    data, 'big')}"
+            f"Slave\t-> ID: {sid}, FC: 0x{fc:02x}, Echo addr: {addr}, Data: {int.from_bytes(data, 'big')}"
         )
         self._log_csv(
             datetime.now().isoformat(),
