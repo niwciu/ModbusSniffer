@@ -12,7 +12,7 @@ jobs:
     name: Test and Lint
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Install system dependencies
       run: |
@@ -33,7 +33,7 @@ jobs:
           libxcb-shape0 \
           libxcb-xfixes0
 
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v6
       with:
         python-version: '3.12.3'
 
@@ -59,7 +59,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: test_and_lint
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Install system dependencies
       run: |
@@ -80,7 +80,7 @@ jobs:
           libxcb-shape0 \
           libxcb-xfixes0
 
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v6
       with:
         python-version: '3.12.3'
 
@@ -116,9 +116,9 @@ jobs:
     runs-on: windows-latest
     needs: test_and_lint
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v6
       with:
         python-version: '3.12.3'
 

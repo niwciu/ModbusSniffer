@@ -12,10 +12,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.12.3'
 
@@ -35,7 +35,7 @@ jobs:
           ls -al release
           
       - name: Upload Ubuntu artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ubuntu-build
           path: release/ModbusSniffer-linux.tar.gz
@@ -44,9 +44,9 @@ jobs:
     name: Build Windows Binary
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v6
       with:
         python-version: '3.12.3'
 
@@ -73,7 +73,7 @@ jobs:
         Compress-Archive -Path dist\* -DestinationPath release\ModbusSniffer-windows.zip
 
     - name: Upload Windows artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: windows-build
         path: release\ModbusSniffer-windows.zip
@@ -84,7 +84,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Extract changelog for tag
         id: changelog
@@ -119,19 +119,19 @@ jobs:
           fi
 
       - name: Download Ubuntu artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: ubuntu-build
           path: dist/
 
       - name: Download Windows artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: windows-build
           path: dist/
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.ref_name }}
           name: ${{ steps.changelog.outputs.release_name }}

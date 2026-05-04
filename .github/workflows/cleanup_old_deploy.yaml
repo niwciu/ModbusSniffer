@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Delete old GitHub Pages deployments
-        uses: actions/github-script@v6
+        uses: actions/github-script@v9
         with:
           script: |
             const deployments = await github.rest.repos.listDeployments({
